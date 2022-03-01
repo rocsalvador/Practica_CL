@@ -92,6 +92,10 @@ int main(int argc, const char* argv[]) {
     return EXIT_FAILURE;
   }
 
+  //********
+  return EXIT_SUCCESS;  // per no provar el typecheck ni el codegen
+  //********
+
   // print the parse tree (for debugging purposes)
   // std::cout << tree->toStringTree(&parser) << std::endl;
 
