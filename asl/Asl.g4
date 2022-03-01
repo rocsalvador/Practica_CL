@@ -81,10 +81,13 @@ left_expr
         ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
-expr    : expr op=(MUL|DIV) expr                    # arithmetic
-        | expr op=PLUS expr                   # arithmetic
-        | expr op=EQUAL expr                  # relational
-        | INTVAL                              # value
+expr    : '(' expr ')'                        # parenthesis
+        | op=(PLUS|MINUS|NOT) expr                   # unary
+        | expr op=(MUL|DIV) expr              # arithmetic
+        | expr op=(PLUS|MINUS) expr           # arithmetic
+        | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr                  # relational
+        | expr op=(AND|OR) expr               # boolean
+        | (INTVAL| FLOATVAL)                             # value
         | ident                               # exprIdent
         ;
 
@@ -98,9 +101,18 @@ ident   : ID
 
 ASSIGN    : '=' ;
 EQUAL     : '==' ;
+NEQ    : '!=';
+GT     : '>' ;
+GE     : '>=' ;
+LT     : '<' ;
+LE     : '<=' ;
 PLUS      : '+' ;
+MINUS      : '-' ;
 MUL       : '*';
 DIV       : '/';
+NOT : 'not';
+AND : 'and';
+OR: 'or';
 VAR       : 'var';
 INT       : 'int';
 BOOL       : 'bool';
@@ -115,7 +127,12 @@ ENDFUNC   : 'endfunc' ;
 READ      : 'read' ;
 WRITE     : 'write' ;
 ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
-INTVAL    : ('0'..'9')+ ;
+DIGIT : ('0'..'9') ;
+INTVAL    : DIGIT+ ;
+EXP : 'e' ('+'|'-') DIGIT+ ;
+FLOATVAL : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* EXP) ;
+CHARVAL : '/'' ('a'..'z'|'A'..'Z'|'_'|'0'..'9') "'"; //unfinished
+
 
 // Strings (in quotes) with escape sequences
 STRING    : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
