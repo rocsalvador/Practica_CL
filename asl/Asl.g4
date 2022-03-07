@@ -87,7 +87,7 @@ expr    : '(' expr ')'                        # parenthesis
         | expr op=(PLUS|MINUS) expr           # arithmetic
         | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr                  # relational
         | expr op=(AND|OR) expr               # boolean
-        | (INTVAL| FLOATVAL)                             # value
+        | (INTVAL|FLOATVAL|CHARVAL)                             # value
         | ident                               # exprIdent
         ;
 
@@ -127,11 +127,12 @@ ENDFUNC   : 'endfunc' ;
 READ      : 'read' ;
 WRITE     : 'write' ;
 ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
+fragment
 DIGIT : ('0'..'9') ;
 INTVAL    : DIGIT+ ;
 EXP : 'e' ('+'|'-') DIGIT+ ;
 FLOATVAL : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* EXP) ;
-CHARVAL : '/'' ('a'..'z'|'A'..'Z'|'_'|'0'..'9') "'"; //unfinished
+CHARVAL : '\'' ('a'..'z'|'A'..'Z'|'_'|'0'..'9') '\''; //unfinished
 
 
 // Strings (in quotes) with escape sequences
