@@ -1,1 +1,8 @@
 asl/Makefile
+*.o
+asl/Asl*
+_antlr
+_deps
+asl/asl
+asl/.antlr
+.vscode

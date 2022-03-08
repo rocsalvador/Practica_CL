@@ -163,7 +163,7 @@ DIGIT : ('0'..'9') ;
 INTVAL    : DIGIT+ ;
 EXP : 'e' ('+'|'-') DIGIT+ ;
 FLOATVAL : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* EXP) ;
-CHARVAL : '\'' ('a'..'z'|'A'..'Z'|'_'|'0'..'9') '\''; //unfinished
+CHARVAL : '\'' ( ESC_SEQ | ~('\\'|'"') )? '\'';
 
 
 // Strings (in quotes) with escape sequences

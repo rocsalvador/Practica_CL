@@ -93,7 +93,7 @@ int main(int argc, const char* argv[]) {
   }
 
   //********
-  return EXIT_SUCCESS;  // per no provar el typecheck ni el codegen
+  // return EXIT_SUCCESS;  // per no provar el typecheck ni el codegen
   //********
 
   // print the parse tree (for debugging purposes)
