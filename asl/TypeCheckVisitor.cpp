@@ -257,7 +257,8 @@ antlrcpp::Any TypeCheckVisitor::visitValue(AslParser::ValueContext *ctx) {
   TypesMgr::TypeId t;
   if (ctx->CHARVAL()) t = Types.createCharacterTy();
   else if (ctx->INTVAL()) t = Types.createIntegerTy();
-  else t = Types.createFloatTy();
+  else if (ctx->FLOATVAL()) t = Types.createFloatTy();
+  else if (ctx->BOOLVAL()) t = Types.createBooleanTy();
   putTypeDecor(ctx, t);
   putIsLValueDecor(ctx, false);
   DEBUG_EXIT();

@@ -66,6 +66,9 @@ variable_decl
         : VAR ID ':' type
         ;
 
+multid
+        : ID (',' ID)* ;
+
 type    : INT
 	| BOOL
 	| FLOAT
@@ -110,7 +113,7 @@ expr    : '(' expr ')'                        # parenthesis
         | expr op=(PLUS|MINUS) expr           # arithmetic
         | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr                  # relational
         | expr op=(AND|OR) expr               # boolean
-        | (INTVAL|FLOATVAL|CHARVAL)                             # value
+        | (INTVAL|FLOATVAL|CHARVAL|BOOLVAL)                             # value
         | (ident|ident '[' expr ']'|funcCall)                               # exprIdent
         ;
 
@@ -164,6 +167,7 @@ INTVAL    : DIGIT+ ;
 EXP : 'e' ('+'|'-') DIGIT+ ;
 FLOATVAL : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* EXP) ;
 CHARVAL : '\'' ( ESC_SEQ | ~('\\'|'"') )? '\'';
+BOOLVAL : ('true' | 'false') ; 
 
 
 // Strings (in quotes) with escape sequences
