@@ -46,8 +46,12 @@ retType
         ;
 
 paramsDef
-        : (ID ':' type) (',' ID ':' type)*
+        :  parameter (',' parameter)*
         ;
+
+parameter
+		: (ID ':' type)
+		;
 
 exprList
         : expr (',' expr)*
@@ -62,7 +66,7 @@ declarations
         ;
 
 variable_decl
-        : VAR ID ':' type
+        : VAR multid ':' type
         ;
 
 multid
@@ -86,10 +90,8 @@ statement
         : funcCall ';'                              # funcCallStmt
         | left_expr ASSIGN expr ';'           		# assignStmt
           // if-then-else statement (else is optional)
-        | IF expr THEN statements ENDIF       		# ifStmt
-        // TODO: Ajuntar if else
-        | IF expr THEN statements (ELSE statements)? ENDIF       # elseIfStmt
-          // A function/procedure call has a list of arguments in parenthesis (possibly empty)
+        | IF expr THEN statements (ELSE statements)? ENDIF       		# ifStmt
+        // A function/procedure call has a list of arguments in parenthesis (possibly empty)
         | WHILE expr DO statements ENDWHILE     	# whileStmt
         | ident '(' ')' ';'                   		# procCall
           // Read a variable
@@ -166,10 +168,6 @@ READ      	: 'read' ;
 WRITE     	: 'write' ;
 
 fragment
-MOREIDS 	: (',' ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*)* ;
-ID      	: ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* MOREIDS ;
-
-fragment
 DIGIT   	: ('0'..'9') ;
 INTVAL      : DIGIT+ ;
 EXP         : 'e' ('+'|'-') DIGIT+ ;
@@ -177,12 +175,13 @@ FLOATVAL    : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* E
 CHARVAL     : '\'' ( ESC_SEQ | ~('\\'|'"') )? '\'' ;
 BOOLVAL     : ('true' | 'false') ; 
 
-
 // Strings (in quotes) with escape sequences
 STRING    	: '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
 
 fragment
 ESC_SEQ   	: '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\') ;
+
+ID      	: ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* ;
 
 // Comments (inline C++-style)
 COMMENT   	: '//' ~('\n'|'\r')* '\r'? '\n' -> skip ;
