@@ -291,21 +291,42 @@ antlrcpp::Any TypeCheckVisitor::visitValue(AslParser::ValueContext *ctx) {
   return 0;
 }
 
-antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
+antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());
-  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  putTypeDecor(ctx, t1);
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  putTypeDecor(ctx, t);
   bool b = getIsLValueDecor(ctx->ident());
-  if (ctx->expr()) {
-    visit(ctx->expr());
-    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
-    if (not Types.isArrayTy(t1)) 
-      Errors.nonArrayInArrayAccess(ctx);
-    if (not Types.isIntegerTy(t2))
-      Errors.nonIntegerIndexInArrayAccess(ctx);
-  }
   putIsLValueDecor(ctx, b);
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
+  DEBUG_ENTER();
+  if (ctx->ident()) {
+    visit(ctx->ident());
+    TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+    putTypeDecor(ctx, t1);
+    bool b = getIsLValueDecor(ctx->ident());
+    putIsLValueDecor(ctx, b);
+    // Has expr if it is an array
+    if (ctx->expr()) {
+      visit(ctx->expr());
+      TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+      if (not Types.isArrayTy(t1)) 
+        Errors.nonArrayInArrayAccess(ctx);
+      if (not Types.isIntegerTy(t2))
+        Errors.nonIntegerIndexInArrayAccess(ctx);
+    }
+  }
+  else if (ctx->funcCall()) {
+    visit(ctx->funcCall());
+    TypesMgr::TypeId funcType = getTypeDecor(ctx->funcCall());
+    putTypeDecor(ctx, funcType);
+    bool b = getIsLValueDecor(ctx->funcCall());
+    putIsLValueDecor(ctx, b);
+  }
   DEBUG_EXIT();
   return 0;
 }

@@ -155,11 +155,14 @@ antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
     TypesMgr::TypeId t = Types.createCharacterTy();
     putTypeDecor(ctx, t);
   }
-  // else if (ctx->ARRAY()) {
-  //   ctx->INTVAL();
-  //   TypesMgr::TypeId t = Types.createArrayTy();
-  //   putTypeDecor(ctx, t);
-  // }
+  else if (ctx->ARRAY()) {
+    ctx->INTVAL();
+    visit(ctx->type());
+    TypesMgr::TypeId arrayType = getTypeDecor(ctx->type());
+    uint size = stoi(ctx->INTVAL()->getText());
+    TypesMgr::TypeId t = Types.createArrayTy(size, arrayType);
+    putTypeDecor(ctx, t);
+  }
   DEBUG_EXIT();
   return 0;
 }

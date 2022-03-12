@@ -58,7 +58,7 @@ exprList
         ;
 
 funcCall
-        : ID '(' exprList? ')'
+        : ident '(' exprList? ')'
         ;
 
 declarations
