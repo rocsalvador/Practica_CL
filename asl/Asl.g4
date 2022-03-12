@@ -38,12 +38,11 @@ program : function+ EOF
 
 // A function has a name, a list of parameters and a list of statements
 function
-        : FUNC ID '(' ')' retType  declarations statements ENDFUNC 
-        | FUNC ID '(' paramsDef ')' retType declarations statements ENDFUNC
+        : FUNC ID '(' paramsDef? ')' retType? declarations statements ENDFUNC 
         ;
 
 retType 
-        : (':' type)?
+        : (':' type)
         ;
 
 paramsDef
@@ -69,10 +68,11 @@ variable_decl
 multid
         : ID (',' ID)* ;
 
-type    : INT
-	| BOOL
-	| FLOAT
-	| CHAR
+type    
+        : INT
+		| BOOL
+		| FLOAT
+		| CHAR
         | ARRAY '[' INTVAL ']' 'of' type  
         ;
 
@@ -84,21 +84,21 @@ statements
 statement
           // Assignment
         : funcCall ';'                              # funcCallStmt
-        | left_expr ASSIGN expr ';'           # assignStmt
+        | left_expr ASSIGN expr ';'           		# assignStmt
           // if-then-else statement (else is optional)
-        | IF expr THEN statements ENDIF       # ifStmt
+        | IF expr THEN statements ENDIF       		# ifStmt
         // TODO: Ajuntar if else
         | IF expr THEN statements (ELSE statements)? ENDIF       # elseIfStmt
           // A function/procedure call has a list of arguments in parenthesis (possibly empty)
-        | WHILE expr DO statements ENDWHILE     # whileStmt
-        | ident '(' ')' ';'                   # procCall
+        | WHILE expr DO statements ENDWHILE     	# whileStmt
+        | ident '(' ')' ';'                   		# procCall
           // Read a variable
-        | READ left_expr ';'                  # readStmt
+        | READ left_expr ';'                  		# readStmt
           // Write an expression
-        | WRITE expr ';'                      # writeExpr
+        | WRITE expr ';'                      		# writeExpr
           // Write a string
-        | WRITE STRING ';'                    # writeString
-        | RETURN expr? ';'                     # return
+        | WRITE STRING ';'                    		# writeString
+        | RETURN expr? ';'                     		# return
         ;
 
 // Grammar for left expressions (l-values in C++)
@@ -107,14 +107,14 @@ left_expr
         ;
 
 // Grammar for expressions with boolean, relational and aritmetic operators
-expr    : '(' expr ')'                        # parenthesis
-        | op=(PLUS|MINUS|NOT) expr                   # unary
-        | expr op=(MUL|DIV|MOD) expr              # arithmetic
-        | expr op=(PLUS|MINUS) expr           # arithmetic
-        | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr                  # relational
-        | expr op=(AND|OR) expr               # boolean
-        | (INTVAL|FLOATVAL|CHARVAL|BOOLVAL)                             # value
-        | (ident|ident '[' expr ']'|funcCall)                               # exprIdent
+expr    : '(' expr ')'                        		# parenthesis
+        | op=(PLUS|MINUS|NOT) expr                  # unary
+        | expr op=(MUL|DIV|MOD) expr              	# arithmetic
+        | expr op=(PLUS|MINUS) expr          		# arithmetic
+        | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr      # relational
+        | expr op=(AND|OR) expr               		# boolean
+        | (INTVAL|FLOATVAL|CHARVAL|BOOLVAL)         # value
+        | (ident|ident '[' expr ']'|funcCall)       # exprIdent
         ;
 
 // Identifiers
@@ -125,61 +125,69 @@ ident   : ID
 /// Lexer Rules
 //////////////////////////////////////////////////
 
-ASSIGN    : '=' ;
-EQUAL     : '==' ;
-NEQ    : '!=';
-GT     : '>' ;
-GE     : '>=' ;
-LT     : '<' ;
-LE     : '<=' ;
-PLUS      : '+' ;
-MINUS      : '-' ;
-MUL       : '*';
-DIV       : '/';
-MOD     : '%';
-NOT : 'not';
-AND : 'and';
-OR: 'or';
-VAR       : 'var';
-INT       : 'int';
-BOOL       : 'bool';
-FLOAT       : 'float';
-CHAR       : 'char';
-ARRAY   : 'array';
-IF        : 'if' ;
-THEN      : 'then' ;
-ELSE      : 'else' ;
-ENDIF     : 'endif' ;
-WHILE   : 'while';
-DO      : 'do';
-ENDWHILE        : 'endwhile';
-FUNC      : 'func' ;
-ENDFUNC   : 'endfunc' ;
-RETURN  : 'return';
-READ      : 'read' ;
-WRITE     : 'write' ;
+ASSIGN  	: '=' ;
+
+EQUAL		: '==' ;
+NEQ         : '!=' ;
+GT          : '>' ;
+GE          : '>=' ;
+LT          : '<' ;
+LE          : '<=' ;
+
+PLUS        : '+' ;
+MINUS       : '-' ;
+MUL         : '*' ;
+DIV         : '/' ;
+MOD         : '%' ;
+
+NOT         : 'not' ;
+AND     	: 'and' ;
+OR			: 'or' ;
+
+VAR       	: 'var' ;
+INT       	: 'int' ;
+BOOL       	: 'bool' ;
+FLOAT       : 'float' ;
+CHAR       	: 'char' ;
+ARRAY   	: 'array' ;
+
+IF        	: 'if' ;
+THEN      	: 'then' ;
+ELSE      	: 'else' ;
+ENDIF     	: 'endif' ;
+WHILE   	: 'while' ;
+DO      	: 'do' ;
+ENDWHILE    : 'endwhile';
+FUNC      	: 'func' ;
+ENDFUNC   	: 'endfunc' ;
+RETURN  	: 'return' ;
+
+READ      	: 'read' ;
+WRITE     	: 'write' ;
+
 fragment
-MOREIDS   : (',' ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*)*;
-ID        : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* MOREIDS;
+MOREIDS 	: (',' ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')*)* ;
+ID      	: ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'_'|'0'..'9')* MOREIDS ;
+
 fragment
-DIGIT : ('0'..'9') ;
-INTVAL    : DIGIT+ ;
-EXP : 'e' ('+'|'-') DIGIT+ ;
-FLOATVAL : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* EXP) ;
-CHARVAL : '\'' ( ESC_SEQ | ~('\\'|'"') )? '\'';
-BOOLVAL : ('true' | 'false') ; 
+DIGIT   	: ('0'..'9') ;
+INTVAL      : DIGIT+ ;
+EXP         : 'e' ('+'|'-') DIGIT+ ;
+FLOATVAL    : (DIGIT* '.' DIGIT+ EXP? | DIGIT+ '.' DIGIT* | DIGIT+ '.'? DIGIT* EXP) ;
+CHARVAL     : '\'' ( ESC_SEQ | ~('\\'|'"') )? '\'' ;
+BOOLVAL     : ('true' | 'false') ; 
 
 
 // Strings (in quotes) with escape sequences
-STRING    : '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
+STRING    	: '"' ( ESC_SEQ | ~('\\'|'"') )* '"' ;
 
 fragment
-ESC_SEQ   : '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\') ;
+ESC_SEQ   	: '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\') ;
 
 // Comments (inline C++-style)
-COMMENT   : '//' ~('\n'|'\r')* '\r'? '\n' -> skip ;
+COMMENT   	: '//' ~('\n'|'\r')* '\r'? '\n' -> skip ;
 
 // White spaces
-WS        : (' '|'\t'|'\r'|'\n')+ -> skip ;
+WS        	: (' '|'\t'|'\r'|'\n')+ -> skip ;
 // Alternative description
 // WS        : [ \t\r\n]+ -> skip ;
