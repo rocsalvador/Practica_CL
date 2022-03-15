@@ -221,7 +221,7 @@ antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx)
     visit(ctx->expr());
     TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
     if (not Types.isIntegerTy(t2))
-      Errors.nonIntegerIndexInArrayAccess(ctx);
+      Errors.nonIntegerIndexInArrayAccess(ctx->expr());
   }
   DEBUG_EXIT();
   return 0;
@@ -317,7 +317,7 @@ antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx)
       if (not Types.isArrayTy(t1)) 
         Errors.nonArrayInArrayAccess(ctx);
       if (not Types.isIntegerTy(t2))
-        Errors.nonIntegerIndexInArrayAccess(ctx);
+        Errors.nonIntegerIndexInArrayAccess(ctx->expr());
     }
   }
   else if (ctx->funcCall()) {
