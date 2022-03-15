@@ -114,8 +114,10 @@ expr    : '(' expr ')'                        		# parenthesis
         | expr op=(MUL|DIV|MOD) expr              	# arithmetic
         | expr op=(PLUS|MINUS) expr          		# arithmetic
         | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr      # relational
-        | expr op=(AND|OR) expr               		# boolean
-        | (INTVAL|FLOATVAL|CHARVAL|BOOLVAL)         # value
+        | expr op=AND expr               		# boolean
+        | expr op=OR expr               		# boolean
+        | INTVAL                                        # value
+        | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
         | (ident|ident '[' expr ']'|funcCall)       # exprIdent
         ;
 

@@ -86,6 +86,12 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);
   Symbols.pushThisScope(sc);
+  // return value check
+  if (ctx->retType()) {
+    visit(ctx->retType()->type());
+    TypesMgr::TypeId t1 = getTypeDecor(ctx->retType()->type());
+    setCurrentFunctionTy(t1);
+  }
   // Symbols.print();
   visit(ctx->statements());
   Symbols.popScope();
@@ -227,6 +233,25 @@ antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx)
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitUnary(AslParser::UnaryContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->expr());
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->expr());
+
+  if (ctx->PLUS() or ctx->MINUS()) {
+    if (not Types.isErrorTy(t1) and (not Types.isNumericTy(t1))) {
+      Errors.incompatibleOperator(ctx->op);
+    }
+  } else if (ctx->NOT()) {
+    if (not Types.isErrorTy(t1) and (not Types.isBooleanTy(t1))) {
+      Errors.incompatibleOperator(ctx->op);
+    }
+  }
+
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitArithmetic(AslParser::ArithmeticContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->expr(0));
@@ -334,12 +359,18 @@ antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx)
 antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   DEBUG_ENTER();
   std::string ident = ctx->getText();
-  if (Symbols.findInStack(ident) == -1) {
+  // TODO
+  if (Symbols.isFunctionClass(ident)) {
+    TypesMgr::TypeId t1 = Symbols.getGlobalFunctionType(ident);
+    putTypeDecor(ctx, t1);
+    putIsLValueDecor(ctx, false);
+  } 
+  else if (Symbols.findInStack(ident) == -1) {
     Errors.undeclaredIdent(ctx->ID());
     TypesMgr::TypeId te = Types.createErrorTy();
     putTypeDecor(ctx, te);
     putIsLValueDecor(ctx, true);
-  }
+  } 
   else {
     TypesMgr::TypeId t1 = Symbols.getType(ident);
     putTypeDecor(ctx, t1);

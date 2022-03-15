@@ -78,6 +78,7 @@ public:
   antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
   antlrcpp::Any visitArithmetic(AslParser::ArithmeticContext *ctx);
+  antlrcpp::Any visitUnary(AslParser::UnaryContext *ctx);
   antlrcpp::Any visitBoolean(AslParser::BooleanContext *ctx);
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
