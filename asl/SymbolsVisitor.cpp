@@ -108,8 +108,8 @@ antlrcpp::Any SymbolsVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   else {
     TypesMgr::TypeId tRet = Types.createVoidTy();
     if (ctx->retType()) {
-      visit(ctx->retType());
-      tRet = getTypeDecor(ctx->retType());
+      visit(ctx->retType()->type());
+      tRet = getTypeDecor(ctx->retType()->type());
     }
     TypesMgr::TypeId tFunc = Types.createFunctionTy(lParamsTy, tRet);
     Symbols.addFunction(ident, tFunc);

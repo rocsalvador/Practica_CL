@@ -360,8 +360,8 @@ antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   DEBUG_ENTER();
   std::string ident = ctx->getText();
   // TODO
-  if (Symbols.isFunctionClass(ident)) {
-    TypesMgr::TypeId t1 = Symbols.getGlobalFunctionType(ident);
+  if (Types.isFunctionTy(Symbols.getType(ident))) {
+    TypesMgr::TypeId t1 = Types.getFuncReturnType(Symbols.getType(ident));
     putTypeDecor(ctx, t1);
     putIsLValueDecor(ctx, false);
   } 
