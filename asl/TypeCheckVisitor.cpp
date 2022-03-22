@@ -133,6 +133,9 @@ antlrcpp::Any TypeCheckVisitor::visitAssignStmt(AslParser::AssignStmtContext *ct
   visit(ctx->expr());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->left_expr());
   TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+  if (Types.isFunctionTy(t2) and Types.isVoidFunction(t2)) {
+    Errors.isNotProcedure(ctx->expr());
+  }
   if ((not Types.isErrorTy(t1)) and (not Types.isErrorTy(t2)) and
       (not Types.equalTypes(t1, t2)) and
       (not (Types.isFloatTy(t1) and Types.isIntegerTy(t2))))
@@ -311,18 +314,11 @@ antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
   if (not Types.isFunctionTy(t) and not Types.isErrorTy(t)) {
     Errors.isNotCallable(ctx->ident());
   }
-  if (Types.isFunctionTy(t)) {
-    TypesMgr::TypeId t1 = Types.getFuncReturnType(t);
-    putTypeDecor(ctx, t1);
-    putIsLValueDecor(ctx, false);
-  } else {
-    putTypeDecor(ctx, t);
-    bool b = getIsLValueDecor(ctx->ident());
-    putIsLValueDecor(ctx, b);
-    DEBUG_EXIT();
-  }
+  putTypeDecor(ctx, t);
+  bool b = getIsLValueDecor(ctx->ident());
+  putIsLValueDecor(ctx, b);
+  DEBUG_EXIT();
   return 0;
-
 }
 
 antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx) {
@@ -359,9 +355,22 @@ antlrcpp::Any TypeCheckVisitor::visitFuncAccess(AslParser::FuncAccessContext *ct
   DEBUG_ENTER();
   visit(ctx->funcCall());
   TypesMgr::TypeId funcType = getTypeDecor(ctx->funcCall());
-  putTypeDecor(ctx, funcType);
-  bool b = getIsLValueDecor(ctx->funcCall());
-  putIsLValueDecor(ctx, b);
+  if (Types.isFunctionTy(funcType) and Types.isVoidFunction(funcType)) {
+    Errors.isNotFunction(ctx);
+  }
+  else if (Types.isFunctionTy(funcType)) {
+    TypesMgr::TypeId t = Types.getFuncReturnType(funcType);
+    putTypeDecor(ctx, t);
+    putIsLValueDecor(ctx, false);
+    bool b = getIsLValueDecor(ctx->funcCall());
+    putIsLValueDecor(ctx, b);
+  }
+  else {
+    putTypeDecor(ctx, funcType);
+    putIsLValueDecor(ctx, false);
+    bool b = getIsLValueDecor(ctx->funcCall());
+    putIsLValueDecor(ctx, b);
+  }
   DEBUG_EXIT();
   return 0;
 }
