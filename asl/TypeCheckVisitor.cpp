@@ -202,27 +202,35 @@ antlrcpp::Any TypeCheckVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx)
 //   return r;
 // }
 
-antlrcpp::Any TypeCheckVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
+antlrcpp::Any TypeCheckVisitor::visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
   putTypeDecor(ctx, t1);
   bool b = getIsLValueDecor(ctx->ident());
   putIsLValueDecor(ctx, b);
+  DEBUG_EXIT();
+  return 0;
+}
 
-  // Has expr only if it is an array
-  if (ctx->expr()) {
-    if (not Types.isArrayTy(t1)) 
-      Errors.nonArrayInArrayAccess(ctx);
-    
+antlrcpp::Any TypeCheckVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  if (not Types.isArrayTy(t1)) 
+    Errors.nonArrayInArrayAccess(ctx);
+  else {
     visit(ctx->expr());
     TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
     if (not Types.isIntegerTy(t2))
       Errors.nonIntegerIndexInArrayAccess(ctx->expr());
+    putTypeDecor(ctx, Types.getArrayElemType(t1));
   }
+  putIsLValueDecor(ctx, true);
   DEBUG_EXIT();
   return 0;
 }
+
 
 antlrcpp::Any TypeCheckVisitor::visitUnary(AslParser::UnaryContext *ctx) {
   DEBUG_ENTER();
@@ -338,7 +346,7 @@ antlrcpp::Any TypeCheckVisitor::visitArrayAccess(AslParser::ArrayAccessContext *
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
   putTypeDecor(ctx, t1);
   bool b = getIsLValueDecor(ctx->ident());
-  putIsLValueDecor(ctx, b);
+  putIsLValueDecor(ctx, true);
   // Has expr if it is an array
   visit(ctx->expr());
   TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
@@ -379,7 +387,7 @@ antlrcpp::Any TypeCheckVisitor::visitFuncAccess(AslParser::FuncAccessContext *ct
 antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
   DEBUG_ENTER();
   std::string ident = ctx->getText();
-  // TODO
+  // TODO preguntar al profe sobre els errors de les funcions del jp 9
   if (Symbols.findInStack(ident) == -1) {
     Errors.undeclaredIdent(ctx->ID());
     TypesMgr::TypeId te = Types.createErrorTy();
