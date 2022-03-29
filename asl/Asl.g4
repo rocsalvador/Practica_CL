@@ -100,7 +100,7 @@ statement
         | WRITE expr ';'                      		        # writeExpr
           // Write a string
         | WRITE STRING ';'                    		        # writeString
-        | RETURN expr? ';'                     		        # return
+        | RETURN expr? ';'                     		        # returnStmt
         ;
 
 // Grammar for left expressions (l-values in C++)
