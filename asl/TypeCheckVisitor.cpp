@@ -39,7 +39,7 @@
 #include <string>
 
 // uncomment the following line to enable debugging messages with DEBUG*
-// #define DEBUG_BUILD
+//#define DEBUG_BUILD
 #include "../common/debug.h"
 
 // using namespace std;
@@ -71,7 +71,7 @@ antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);
   Symbols.pushThisScope(sc);
-  for (auto ctxFunc : ctx->function()) { 
+  for (auto ctxFunc : ctx->function()) {
     visit(ctxFunc);
   }
   if (Symbols.noMainProperlyDeclared())
@@ -91,6 +91,8 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
     visit(ctx->retType()->type());
     TypesMgr::TypeId t1 = getTypeDecor(ctx->retType()->type());
     setCurrentFunctionTy(t1);
+  } else {
+    setCurrentFunctionTy(Types.createVoidTy());
   }
   // Symbols.print();
   visit(ctx->statements());
@@ -142,9 +144,26 @@ antlrcpp::Any TypeCheckVisitor::visitAssignStmt(AslParser::AssignStmtContext *ct
     Errors.incompatibleAssignment(ctx->ASSIGN());
   if ((not Types.isErrorTy(t1)) and (not getIsLValueDecor(ctx->left_expr())))
     Errors.nonReferenceableLeftExpr(ctx->left_expr());
-  
+
   DEBUG_EXIT();
   return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
+    DEBUG_ENTER();
+    if (ctx->expr()) {
+        visit(ctx->expr());
+        TypesMgr::TypeId t = getTypeDecor(ctx->expr());
+        if (getCurrentFunctionTy() != t and !(Types.isIntegerTy(t) and Types.isFloatTy(getCurrentFunctionTy()))) {
+            Errors.incompatibleReturn(ctx->RETURN());
+        }
+    } else {    //function is void
+        if (!Types.isVoidTy(getCurrentFunctionTy())) {
+            Errors.incompatibleReturn(ctx->RETURN());
+        }
+    }
+    DEBUG_EXIT();
+    return 0;
 }
 
 antlrcpp::Any TypeCheckVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
@@ -217,7 +236,7 @@ antlrcpp::Any TypeCheckVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessC
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  if (not Types.isArrayTy(t1)) 
+  if (not Types.isArrayTy(t1))
     Errors.nonArrayInArrayAccess(ctx);
   else {
     visit(ctx->expr());
@@ -344,14 +363,18 @@ antlrcpp::Any TypeCheckVisitor::visitArrayAccess(AslParser::ArrayAccessContext *
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  putTypeDecor(ctx, t1);
+  if (not Types.isArrayTy(t1)) {
+    Errors.nonArrayInArrayAccess(ctx);
+    putTypeDecor(ctx, Types.createErrorTy());
+  } else {
+    TypesMgr::TypeId tElem = Types.getArrayElemType(t1);
+    putTypeDecor(ctx, tElem);
+  }
   bool b = getIsLValueDecor(ctx->ident());
   putIsLValueDecor(ctx, true);
-  // Has expr if it is an array
+  // Has expr because it is an array
   visit(ctx->expr());
   TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
-  if (not Types.isArrayTy(t1)) 
-    Errors.nonArrayInArrayAccess(ctx);
   if (not Types.isIntegerTy(t2))
     Errors.nonIntegerIndexInArrayAccess(ctx->expr());
   DEBUG_EXIT();
@@ -393,7 +416,7 @@ antlrcpp::Any TypeCheckVisitor::visitIdent(AslParser::IdentContext *ctx) {
     TypesMgr::TypeId te = Types.createErrorTy();
     putTypeDecor(ctx, te);
     putIsLValueDecor(ctx, true);
-  } 
+  }
   else {
     TypesMgr::TypeId t1 = Symbols.getType(ident);
     putTypeDecor(ctx, t1);
