@@ -39,7 +39,7 @@
 #include <string>
 
 // uncomment the following line to enable debugging messages with DEBUG*
-//#define DEBUG_BUILD
+// #define DEBUG_BUILD
 #include "../common/debug.h"
 
 // using namespace std;
@@ -354,15 +354,20 @@ antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
     uint nParams = ctx->exprList()->expr().size();
     if (Types.getNumOfParameters(t) != nParams) {
       Errors.numberOfParameters(ctx->ident());
-    } else {
-      for(uint i = 0; i < nParams; ++i) {
-        // check type
-        visit(ctx->exprList()->expr(i));
-        TypesMgr::TypeId t1 = getTypeDecor(ctx->exprList()->expr(i));
-        if (not Types.equalTypes(t1, Types.getParameterType(t, i))) {
-          Errors.incompatibleParameter(ctx->exprList()->expr(i), i+1, ctx->ident());
-        }
+    }
+    for(uint i = 0; i < nParams; ++i) {
+      // check type
+      visit(ctx->exprList()->expr(i));
+      TypesMgr::TypeId t1 = getTypeDecor(ctx->exprList()->expr(i));
+      if (i < Types.getNumOfParameters(t) and not Types.equalTypes(t1, Types.getParameterType(t, i))) {
+        Errors.incompatibleParameter(ctx->exprList()->expr(i), i+1, ctx->ident());
       }
+    }
+
+  }
+  else {
+    if (Types.getNumOfParameters(t) != 0) {
+      Errors.numberOfParameters(ctx->ident());
     }
   }
   DEBUG_EXIT();
