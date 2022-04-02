@@ -350,6 +350,21 @@ antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
   putTypeDecor(ctx, t);
   bool b = getIsLValueDecor(ctx->ident());
   putIsLValueDecor(ctx, b);
+  if (ctx->exprList()) {
+    uint nParams = ctx->exprList()->expr().size();
+    if (Types.getNumOfParameters(t) != nParams) {
+      Errors.numberOfParameters(ctx->ident());
+    } else {
+      for(uint i = 0; i < nParams; ++i) {
+        // check type
+        visit(ctx->exprList()->expr(i));
+        TypesMgr::TypeId t1 = getTypeDecor(ctx->exprList()->expr(i));
+        if (not Types.equalTypes(t1, Types.getParameterType(t, i))) {
+          Errors.incompatibleParameter(ctx->exprList()->expr(i), i+1, ctx->ident());
+        }
+      }
+    }
+  }
   DEBUG_EXIT();
   return 0;
 }
