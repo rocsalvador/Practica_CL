@@ -236,16 +236,22 @@ antlrcpp::Any TypeCheckVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessC
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  if (not Types.isArrayTy(t1))
-    Errors.nonArrayInArrayAccess(ctx);
-  else {
-    visit(ctx->expr());
-    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
-    if (not Types.isIntegerTy(t2))
-      Errors.nonIntegerIndexInArrayAccess(ctx->expr());
-    putTypeDecor(ctx, Types.getArrayElemType(t1));
+  if (not Types.isErrorTy(t1)) {
+    if (not Types.isArrayTy(t1)) {
+        Errors.nonArrayInArrayAccess(ctx);
+        putTypeDecor(ctx, Types.createErrorTy());
+    } else {
+        visit(ctx->expr());
+        TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+        if (not Types.isIntegerTy(t2))
+          Errors.nonIntegerIndexInArrayAccess(ctx->expr());
+        putTypeDecor(ctx, Types.getArrayElemType(t1));
+      }
+      putIsLValueDecor(ctx, true);
+  } else {
+    putTypeDecor(ctx, t1);
   }
-  putIsLValueDecor(ctx, true);
+  
   DEBUG_EXIT();
   return 0;
 }
@@ -363,20 +369,23 @@ antlrcpp::Any TypeCheckVisitor::visitArrayAccess(AslParser::ArrayAccessContext *
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
-  if (not Types.isArrayTy(t1)) {
-    Errors.nonArrayInArrayAccess(ctx);
-    putTypeDecor(ctx, Types.createErrorTy());
+  if (not Types.isErrorTy(t1)) {
+    if (not Types.isArrayTy(t1)) {
+      Errors.nonArrayInArrayAccess(ctx);
+      putTypeDecor(ctx, Types.createErrorTy());
+    } else {
+      TypesMgr::TypeId tElem = Types.getArrayElemType(t1);
+      putTypeDecor(ctx, tElem);
+    }
+    putIsLValueDecor(ctx, true);
+    // Has expr because it is an array
+    visit(ctx->expr());
+    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
+    if (not Types.isIntegerTy(t2))
+      Errors.nonIntegerIndexInArrayAccess(ctx->expr());
   } else {
-    TypesMgr::TypeId tElem = Types.getArrayElemType(t1);
-    putTypeDecor(ctx, tElem);
+    putTypeDecor(ctx, t1);
   }
-  bool b = getIsLValueDecor(ctx->ident());
-  putIsLValueDecor(ctx, true);
-  // Has expr because it is an array
-  visit(ctx->expr());
-  TypesMgr::TypeId t2 = getTypeDecor(ctx->expr());
-  if (not Types.isIntegerTy(t2))
-    Errors.nonIntegerIndexInArrayAccess(ctx->expr());
   DEBUG_EXIT();
   return 0;
 }
