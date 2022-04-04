@@ -80,6 +80,11 @@ type
         | ARRAY '[' INTVAL ']' 'of' type  
         ;
 
+packOrUnpack
+        : PACK exprList INTO ID
+        | UNPACK ID INTO exprList
+        ;
+
 statements
         : (statement)*
         ;
@@ -97,6 +102,7 @@ statement
         | READ left_expr ';'                                    # readStmt
           // Write an expression
         | ident '(' ')' ';'                                     # procCall
+        | packOrUnpack ';'                                      # packUnpack
         | WRITE expr ';'                                        # writeExpr
           // Write a string
         | WRITE STRING ';'                                      # writeString
@@ -171,6 +177,10 @@ RETURN  	: 'return' ;
 
 READ      	: 'read' ;
 WRITE     	: 'write' ;
+
+PACK            : 'pack' ;
+UNPACK          : 'unpack' ;
+INTO            : 'into' ;
 
 fragment
 DIGIT   	: ('0'..'9') ;
