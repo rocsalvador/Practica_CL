@@ -2,7 +2,7 @@
 //
 //    SemErrors - Semantic errors for the Asl programming language
 //
-//    Copyright (C) 2017-2022  Universitat Politecnica de Catalunya
+//    Copyright (C) 2019  Universitat Politecnica de Catalunya
 //
 //    This library is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU General Public License
@@ -105,6 +105,20 @@ public:
   //   ctx is the program node (grammar start symbol) 
   void noMainProperlyDeclared       (antlr4::ParserRuleContext *ctx);
 
+  //// *** PACK / UNPACK ***
+  //   ctx is the node corresponding to the pack/unpack instruction
+  void packUnpackWithNonArray          (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to the pack/unpack instruction
+  void packUnpackNumberOfItemsMismatch (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to the pack/unpack instruction
+  //   n is the number of packed expression or unpackup identifier, starting from 1
+  void packUnpackIncompatibleTypes     (antlr4::ParserRuleContext *ctx,
+					unsigned int n);
+  //// *** TUPLES ***
+  //   ctx is the node corresponding to a tuple access
+  void nonTupleInTupleAccess      (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to a tuple access
+  void nonExistentFieldInTuple     (antlr4::ParserRuleContext *ctx);
 
 private:
 
@@ -114,7 +128,6 @@ private:
     ErrorInfo(std::size_t line, std::size_t coln, std::string message);
     std::size_t getLine() const;
     std::size_t getColumnInLine() const;
-    std::string getMessage() const;
     void print() const;
   private:
     std::size_t line, coln;
