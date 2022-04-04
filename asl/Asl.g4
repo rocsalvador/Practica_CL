@@ -50,8 +50,8 @@ paramsDef
         ;
 
 parameter
-	: (ID ':' type)
-	;
+        : (ID ':' type)
+        ;
 
 exprList
         : expr (',' expr)*
@@ -70,13 +70,13 @@ variable_decl
         ;
 
 multid
-        : ID (',' ID)* ;
+        : ident (',' ident)* ;
 
 type    
         : INT
-	| BOOL
-	| FLOAT
-	| CHAR
+        | BOOL
+        | FLOAT
+        | CHAR
         | ARRAY '[' INTVAL ']' 'of' type  
         ;
 
@@ -89,18 +89,18 @@ statement
           // A function/procedure call has a list of arguments in parenthesis (possibly empty)
         : funcCall ';'                                          # funcCallStmt
           // Assignment
-        | left_expr ASSIGN expr ';'           		        # assignStmt
+        | left_expr ASSIGN expr ';'                             # assignStmt
           // if-then-else statement (else is optional)
-        | IF expr THEN statements (ELSE statements)? ENDIF       # ifStmt
-        | WHILE expr DO statements ENDWHILE     	        # whileStmt
+        | IF expr THEN statements (ELSE statements)? ENDIF      # ifStmt
+        | WHILE expr DO statements ENDWHILE                     # whileStmt
           // Read a variable
-        | READ left_expr ';'                  		        # readStmt
+        | READ left_expr ';'                                    # readStmt
           // Write an expression
         | ident '(' ')' ';'                                     # procCall
-        | WRITE expr ';'                      		        # writeExpr
+        | WRITE expr ';'                                        # writeExpr
           // Write a string
-        | WRITE STRING ';'                    		        # writeString
-        | RETURN expr? ';'                     		        # returnStmt
+        | WRITE STRING ';'                                      # writeString
+        | RETURN expr? ';'                                      # returnStmt
         ;
 
 // Grammar for left expressions (l-values in C++)
@@ -110,13 +110,13 @@ left_expr
         ;       
 
 // Grammar for expressions with boolean, relational and aritmetic operators
-expr    : '(' expr ')'                        		# parenthesis
+expr    : '(' expr ')'                                  # parenthesis
         | op=(PLUS|MINUS|NOT) expr                      # unary
-        | expr op=(MUL|DIV|MOD) expr              	# arithmetic
-        | expr op=(PLUS|MINUS) expr          		# arithmetic
+        | expr op=(MUL|DIV|MOD) expr                    # arithmetic
+        | expr op=(PLUS|MINUS) expr                     # arithmetic
         | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr          # relational
-        | expr op=AND expr               		# boolean
-        | expr op=OR expr               		# boolean
+        | expr op=AND expr                              # boolean
+        | expr op=OR expr                               # boolean
         | INTVAL                                        # value
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
         | funcCall                                      # funcAccess

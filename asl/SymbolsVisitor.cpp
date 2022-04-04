@@ -129,11 +129,11 @@ antlrcpp::Any SymbolsVisitor::visitDeclarations(AslParser::DeclarationsContext *
 antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->type());
-  for(uint i = 0; i < ctx->multid()->ID().size(); ++i) {
+  for(uint i = 0; i < ctx->multid()->ident().size(); ++i) {
     // std::cout << ctx->multid()->ID(i)->getText() << std::endl;
-    std::string ident = ctx->multid()->ID(i)->getText();
+    std::string ident = ctx->multid()->ident(i)->getText();
     if (Symbols.findInCurrentScope(ident)) {
-      Errors.declaredIdent(ctx->multid()->ID(i));
+      Errors.declaredIdent(ctx->multid()->ident(i)->ID());
     }
     else {
       TypesMgr::TypeId t1 = getTypeDecor(ctx->type());
