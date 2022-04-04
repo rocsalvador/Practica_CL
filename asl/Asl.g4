@@ -70,7 +70,7 @@ variable_decl
         ;
 
 multid
-        : ID (',' ID)* ;
+        : ident (',' ident)* ;
 
 type    
         : INT
@@ -101,6 +101,8 @@ statement
           // Write a string
         | WRITE STRING ';'                    		        # writeString
         | RETURN expr? ';'                     		        # returnStmt
+        | PACK exprList INTO ident ';'                          # pack
+        | UNPACK ident INTO exprList ';'                          # unpack
         ;
 
 // Grammar for left expressions (l-values in C++)
@@ -168,6 +170,10 @@ ENDWHILE    : 'endwhile';
 FUNC      	: 'func' ;
 ENDFUNC   	: 'endfunc' ;
 RETURN  	: 'return' ;
+
+UNPACK      : 'unpack';
+PACK        : 'pack';
+INTO        : 'into';
 
 READ      	: 'read' ;
 WRITE     	: 'write' ;

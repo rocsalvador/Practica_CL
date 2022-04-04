@@ -101,6 +101,56 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitPack(AslParser::PackContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  if (Types.isArrayTy(t)) {
+    TypesMgr::TypeId t1 = Types.getArrayElemType(t);
+    for (uint i = 0; i < ctx->exprList()->expr().size(); ++i) {
+      visit(ctx->exprList()->expr(i));
+      TypesMgr::TypeId t2 = getTypeDecor(ctx->exprList()->expr(i));
+      if (not Types.equalTypes(t1, t2) and
+          not (Types.isIntegerTy(t1) and Types.isFloatTy(t2)) and
+          not Types.isErrorTy(t2)) {
+        Errors.packUnpackIncompatibleTypes(ctx, i+1);
+      }
+    }
+  }
+  else {
+    Errors.packUnpackWithNonArray(ctx);
+  }
+  return 0;
+  DEBUG_EXIT();
+}
+
+antlrcpp::Any TypeCheckVisitor::visitUnpack(AslParser::UnpackContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  if (Types.isArrayTy(t)) {
+    TypesMgr::TypeId t1 = Types.getArrayElemType(t);
+    uint arraySize = Types.getArraySize(t);
+    if (arraySize != ctx->exprList()->expr().size()) {
+      Errors.packUnpackNumberOfItemsMismatch(ctx);
+    }
+    for (uint i = 0; i < ctx->exprList()->expr().size(); ++i) {
+      visit(ctx->exprList()->expr(i));
+      TypesMgr::TypeId t2 = getTypeDecor(ctx->exprList()->expr(i));
+      if (not Types.equalTypes(t1, t2) and
+          not (Types.isIntegerTy(t1) and Types.isFloatTy(t2)) and
+          not Types.isErrorTy(t2)) {
+        Errors.packUnpackIncompatibleTypes(ctx, i+1);
+      }
+    }
+  }
+  else {
+    Errors.packUnpackWithNonArray(ctx);
+  }
+  return 0;
+  DEBUG_EXIT();
+}
+
 // antlrcpp::Any TypeCheckVisitor::visitDeclarations(AslParser::DeclarationsContext *ctx) {
 //   DEBUG_ENTER();
 //   antlrcpp::Any r = visitChildren(ctx);
