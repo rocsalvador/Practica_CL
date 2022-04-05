@@ -144,6 +144,28 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
   return 0;
 }
 
+antlrcpp::Any SymbolsVisitor::visitBasicType(AslParser::BasicTypeContext *ctx) {
+  DEBUG_ENTER();
+  if (ctx->INT()) {
+    TypesMgr::TypeId t = Types.createIntegerTy();
+    putTypeDecor(ctx, t);
+  }
+  else if (ctx->FLOAT()) {
+    TypesMgr::TypeId t = Types.createFloatTy();
+    putTypeDecor(ctx, t);
+  }
+  else if (ctx->BOOL()) {
+    TypesMgr::TypeId t = Types.createBooleanTy();
+    putTypeDecor(ctx, t);
+  }
+  else if (ctx->CHAR()) {
+    TypesMgr::TypeId t = Types.createCharacterTy();
+    putTypeDecor(ctx, t);
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
   DEBUG_ENTER();
   if (ctx->INT()) {
@@ -169,6 +191,19 @@ antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
     uint size = stoi(ctx->INTVAL()->getText());
     TypesMgr::TypeId t = Types.createArrayTy(size, arrayType);
     putTypeDecor(ctx, t);
+  } 
+  else if (ctx->pythonTuple()) {
+    std::vector<TypesMgr::TypeId> tupleTys;
+    int tupleSize = ctx->pythonTuple()->basicTypeList()->basicType().size();
+
+    for(int i = 0; i < tupleSize; ++i) {
+      auto basicType = ctx->pythonTuple()->basicTypeList()->basicType(i);
+      visit(basicType);
+      TypesMgr::TypeId elemType = getTypeDecor(basicType);
+      tupleTys.push_back(elemType);
+    }
+    TypesMgr::TypeId tupleType = Types.createTupleTy(tupleTys);
+    putTypeDecor(ctx, tupleType);
   }
   DEBUG_EXIT();
   return 0;

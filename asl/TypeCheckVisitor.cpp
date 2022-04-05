@@ -441,6 +441,57 @@ antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx)
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitLeftPythonTupleAccess(AslParser::LeftPythonTupleAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  if (not Types.isErrorTy(t)) {
+    if (Types.isTupleTy(t)) {
+      putIsLValueDecor(ctx, true);
+      // Has expr because it is a python tuple
+      uint i = std::stoi(ctx->INTVAL()->toString());
+
+      if (Types.getTupleSize(t) <= i) {
+        Errors.nonExistentFieldInTuple(ctx);
+      } else {
+        TypesMgr::TypeId tElem = Types.getTupleFieldType(t, i);
+        putTypeDecor(ctx, tElem);
+      }
+    } 
+    else {
+      Errors.nonTupleInTupleAccess(ctx);
+      putTypeDecor(ctx, Types.createErrorTy());
+    }
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitPythonTupleAccess(AslParser::PythonTupleAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  if (not Types.isErrorTy(t)) {
+    if (Types.isTupleTy(t)) {
+      // Has expr because it is a python tuple
+      uint i = std::stoi(ctx->INTVAL()->toString());
+
+      if (Types.getTupleSize(t) <= i) {
+        Errors.nonExistentFieldInTuple(ctx);
+      } else {
+        TypesMgr::TypeId tElem = Types.getTupleFieldType(t, i);
+        putTypeDecor(ctx, tElem);
+      }
+    }
+    else {
+      Errors.nonTupleInTupleAccess(ctx);
+      putTypeDecor(ctx, Types.createErrorTy());
+    }
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitArrayAccess(AslParser::ArrayAccessContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());

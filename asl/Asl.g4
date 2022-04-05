@@ -72,12 +72,28 @@ variable_decl
 multid
         : ident (',' ident)* ;
 
+basicType
+        : INT
+        | BOOL
+        | FLOAT
+        | CHAR
+        ;
+
+basicTypeList
+        : basicType (',' basicType)*
+        ;
+
+pythonTuple
+        : '{' basicTypeList '}'
+        ;
+
 type    
         : INT
         | BOOL
         | FLOAT
         | CHAR
-        | ARRAY '[' INTVAL ']' 'of' type  
+        | ARRAY '[' INTVAL ']' 'of' type
+        | pythonTuple
         ;
 
 packOrUnpack
@@ -112,6 +128,7 @@ statement
 // Grammar for left expressions (l-values in C++)
 left_expr
         : ident '[' expr ']'                            # leftArrayAccess
+        | ident '{' INTVAL '}'                            # leftPythonTupleAccess
         | ident                                         # leftExprIdent
         ;       
 
@@ -127,6 +144,7 @@ expr    : '(' expr ')'                                  # parenthesis
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
         | funcCall                                      # funcAccess
         | ident '[' expr ']'                            # arrayAccess
+        | ident '{' INTVAL '}'                          # pythonTupleAccess
         | ident                                         # exprIdent
         ;
 
