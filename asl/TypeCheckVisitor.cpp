@@ -193,6 +193,33 @@ antlrcpp::Any TypeCheckVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx)
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitForStmt(AslParser::ForStmtContext *ctx) {
+  DEBUG_ENTER();
+  int nParams = ctx->exprList()->expr().size();
+  // check number of params
+  if (nParams > 3) {
+    Errors.numberOfRangeExpressions(ctx);
+  }
+  // check control variable is integer
+  visit(ctx->ident());
+  TypesMgr::TypeId controlVarType = getTypeDecor(ctx->ident());
+  if (not Types.isIntegerTy(controlVarType) and not Types.isErrorTy(controlVarType)) {
+    Errors.forRequireIntegerVar(ctx->ident());
+  }
+  // check params are integers
+  for(int i = 0; i < nParams; ++i) {
+    visit(ctx->exprList()->expr(i));
+    TypesMgr::TypeId paramType = getTypeDecor(ctx->exprList()->expr(i));
+    if (not Types.isIntegerTy(paramType) and not Types.isErrorTy(paramType)) {
+      Errors.forRequireIntegerExpr(ctx->exprList()->expr(i));
+    }
+  }
+  visit(ctx->statements());
+  DEBUG_EXIT();
+  return 0;
+}
+
+
 antlrcpp::Any TypeCheckVisitor::visitReadStmt(AslParser::ReadStmtContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->left_expr());

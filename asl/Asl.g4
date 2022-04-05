@@ -93,10 +93,11 @@ statement
           // if-then-else statement (else is optional)
         | IF expr THEN statements (ELSE statements)? ENDIF      # ifStmt
         | WHILE expr DO statements ENDWHILE                     # whileStmt
+        | FOR ident INRANGE '(' exprList ')' DO statements ENDFOR        # forStmt
           // Read a variable
         | READ left_expr ';'                                    # readStmt
-          // Write an expression
         | ident '(' ')' ';'                                     # procCall
+          // Write an expression
         | WRITE expr ';'                                        # writeExpr
           // Write a string
         | WRITE STRING ';'                                      # writeString
@@ -174,6 +175,9 @@ READ      	: 'read' ;
 WRITE     	: 'write' ;
 
 MAX             : 'max' ;
+FOR             : 'for' ;
+INRANGE         : 'in range' ;
+ENDFOR          : 'endfor' ;
 
 fragment
 DIGIT   	: ('0'..'9') ;
