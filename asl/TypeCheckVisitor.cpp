@@ -375,7 +375,8 @@ antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
       if (isFunctionTy and i < Types.getNumOfParameters(t)) {
         TypesMgr::TypeId paramTy = Types.getParameterType(t, i);
         if (not Types.equalTypes(t1, paramTy) and
-            not (Types.isIntegerTy(t1) and Types.isFloatTy(paramTy)))
+            not (Types.isIntegerTy(t1) and Types.isFloatTy(paramTy)) and
+            not Types.isErrorTy(t1))
         Errors.incompatibleParameter(ctx->exprList()->expr(i), i+1, ctx->ident());
       }
     }
