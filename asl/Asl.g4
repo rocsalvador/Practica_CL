@@ -122,6 +122,7 @@ expr    : '(' expr ')'                                  # parenthesis
         | funcCall                                      # funcAccess
         | ident '[' expr ']'                            # arrayAccess
         | ident                                         # exprIdent
+        | MAX '(' exprList? ')'                         # max
         ;
 
 // Identifiers
@@ -131,6 +132,8 @@ ident   : ID
 //////////////////////////////////////////////////
 /// Lexer Rules
 //////////////////////////////////////////////////
+
+MAX         : 'max' ;
 
 ASSIGN      : '=' ;
 

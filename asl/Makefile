@@ -19,7 +19,7 @@ PROGRAM		:= asl
 # If you want the generated files to be in
 # for instance the 'gen' subdirectory, then
 # define the name of the additional directory here
-#GENDIR		:= gen
+# GENDIR		:= out
 # otherwise, put a '#' character in front of the
 # line to turn it into comment.
 

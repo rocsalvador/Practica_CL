@@ -101,6 +101,51 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitMax(AslParser::MaxContext *ctx) {
+  DEBUG_ENTER();
+  if (ctx->exprList()) {
+    uint nArgs = ctx->exprList()->expr().size();
+    if (nArgs < 2) {
+      Errors.numberOfMaxArguments(ctx);
+    }
+
+    bool incompatibeTypes = false;
+    bool charMax = false;
+    bool floatMax = false;
+    for (uint i = 0; i < nArgs; ++i) {
+      visit(ctx->exprList()->expr(i));
+      TypesMgr::TypeId t1 = getTypeDecor(ctx->exprList()->expr(i));
+      if (not Types.isCharacterTy(t1) and
+          not Types.isNumericTy(t1) and
+          not Types.isErrorTy(t1)) {
+        incompatibeTypes = true;
+      }
+      else {
+        if (Types.isCharacterTy(t1)) {
+          if (i == 0) charMax = true;
+          else if (not charMax) {
+            incompatibeTypes = true;
+          }
+        }
+        else if (Types.isNumericTy(t1)) {
+          if (i == 0) floatMax = Types.isFloatTy(t1);
+          else if (Types.isFloatTy(t1)) floatMax = true;
+          if (charMax) {
+            incompatibeTypes = true;
+          }
+        }
+      }
+    }
+    if (incompatibeTypes) Errors.incompatibleMaxArguments(ctx);
+    else if (charMax) putTypeDecor(ctx, Types.createCharacterTy());
+    else if (floatMax) putTypeDecor(ctx, Types.createFloatTy());
+    else putTypeDecor(ctx, Types.createIntegerTy());
+  }
+  else Errors.numberOfMaxArguments(ctx);
+  DEBUG_EXIT();
+  return 0;
+}
+
 // antlrcpp::Any TypeCheckVisitor::visitDeclarations(AslParser::DeclarationsContext *ctx) {
 //   DEBUG_ENTER();
 //   antlrcpp::Any r = visitChildren(ctx);

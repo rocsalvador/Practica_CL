@@ -52,7 +52,7 @@ JPDIR=$BASEDIR/jps
 pushd $BASEDIR/asl > /dev/null
 make pristine
 make antlr
-make
+make -j 16
 popd > /dev/null
 
 # inicialitzar comptadors
