@@ -109,8 +109,9 @@ left_expr
         | ident                                         # leftExprIdent
         ;       
 
-// Grammar for expressions with boolean, relational and aritmetic operators
+// Grammar for expressions with boolean, relational and arithmetic operators
 expr    : '(' expr ')'                                  # parenthesis
+        | MAX '(' exprList? ')'                          # maxExpr
         | op=(PLUS|MINUS|NOT) expr                      # unary
         | expr op=(MUL|DIV|MOD) expr                    # arithmetic
         | expr op=(PLUS|MINUS) expr                     # arithmetic
@@ -171,6 +172,8 @@ RETURN  	: 'return' ;
 
 READ      	: 'read' ;
 WRITE     	: 'write' ;
+
+MAX             : 'max' ;
 
 fragment
 DIGIT   	: ('0'..'9') ;

@@ -70,6 +70,7 @@ public:
   antlrcpp::Any visitAssignStmt(AslParser::AssignStmtContext *ctx);
   antlrcpp::Any visitWhileStmt(AslParser::WhileStmtContext *ctx);
   antlrcpp::Any visitIfStmt(AslParser::IfStmtContext *ctx);
+  antlrcpp::Any visitMaxExpr(AslParser::MaxExprContext *ctx);
   antlrcpp::Any visitFuncAccess(AslParser::FuncAccessContext *ctx);
   antlrcpp::Any visitArrayAccess(AslParser::ArrayAccessContext *ctx);
   antlrcpp::Any visitReadStmt(AslParser::ReadStmtContext *ctx);
