@@ -267,10 +267,12 @@ antlrcpp::Any TypeCheckVisitor::visitUnary(AslParser::UnaryContext *ctx) {
     if (not Types.isErrorTy(t1) and (not Types.isNumericTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
+    else putTypeDecor(ctx, t1);
   } else if (ctx->NOT()) {
     if (not Types.isErrorTy(t1) and (not Types.isBooleanTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
+    else putTypeDecor(ctx, t1);
   }
 
   DEBUG_EXIT();
