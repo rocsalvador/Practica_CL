@@ -120,11 +120,10 @@ left_expr
 // Grammar for expressions with boolean, relational and aritmetic operators
 expr    : '(' expr ')'                                  # parenthesis
         | op=(PLUS|MINUS|NOT) expr                      # unary
-        | expr op=AND expr                              # boolean
-        | expr op=OR expr                               # boolean
         | expr op=(MUL|DIV|MOD) expr                    # arithmetic
         | expr op=(PLUS|MINUS) expr                     # arithmetic
         | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr          # relational
+        | expr op=(AND|OR) expr                         # boolean
         | INTVAL                                        # value
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
         | funcCall                                      # funcAccess
