@@ -128,7 +128,6 @@ private:
     ErrorInfo(std::size_t line, std::size_t coln, std::string message);
     std::size_t getLine() const;
     std::size_t getColumnInLine() const;
-    std::string getMessage() const;
     void print() const;
   private:
     std::size_t line, coln;

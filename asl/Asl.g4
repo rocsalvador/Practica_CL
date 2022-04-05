@@ -16,7 +16,7 @@
 //
 //    You should have received a copy of the GNU Affero General Public
 //    License along with this library; if not, write to the Free Software
-//    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+//    Foundation, Inc., 59 Temple Place, Suite 330, Boston, return 0;MA 02111-1307 USA
 //
 //    contact: José Miguel Rivero (rivero@cs.upc.edu)
 //             Computer Science Department
@@ -50,8 +50,8 @@ paramsDef
         ;
 
 parameter
-	: (ID ':' type)
-	;
+        : (ID ':' type)
+        ;
 
 exprList
         : expr (',' expr)*
@@ -74,10 +74,15 @@ multid
 
 type    
         : INT
-	| BOOL
-	| FLOAT
-	| CHAR
+        | BOOL
+        | FLOAT
+        | CHAR
         | ARRAY '[' INTVAL ']' 'of' type  
+        | tuple
+        ;
+
+tuple
+        : '{' type (',' type)* '}'
         ;
 
 statements
@@ -101,7 +106,7 @@ statement
           // Write a string
         | WRITE STRING ';'                                      # writeString
         | RETURN expr? ';'                                      # returnStmt
-| PACK exprList INTO ident ';'                                  # pack
+        | PACK exprList INTO ident ';'                          # pack
         | UNPACK ident INTO exprList ';'                        # unpack
         ;
 
@@ -109,21 +114,23 @@ statement
 left_expr
         : ident '[' expr ']'                            # leftArrayAccess
         | ident                                         # leftExprIdent
+        | ident '{' INTVAL '}'                          # leftTupleAccess
         ;       
 
 // Grammar for expressions with boolean, relational and aritmetic operators
 expr    : '(' expr ')'                                  # parenthesis
         | op=(PLUS|MINUS|NOT) expr                      # unary
+        | expr op=AND expr                              # boolean
+        | expr op=OR expr                               # boolean
         | expr op=(MUL|DIV|MOD) expr                    # arithmetic
         | expr op=(PLUS|MINUS) expr                     # arithmetic
         | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr          # relational
-        | expr op=AND expr                              # boolean
-        | expr op=OR expr                               # boolean
         | INTVAL                                        # value
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
         | funcCall                                      # funcAccess
         | ident '[' expr ']'                            # arrayAccess
         | ident                                         # exprIdent
+        | ident '{' INTVAL '}'                          # tupleAccess
         ;
 
 // Identifiers

@@ -170,6 +170,16 @@ antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
     TypesMgr::TypeId t = Types.createArrayTy(size, arrayType);
     putTypeDecor(ctx, t);
   }
+  else if (ctx->tuple()) {
+    std::vector<TypesMgr::TypeId> tupleTys;
+    for (auto type : ctx->tuple()->type()) {
+      visit(type);
+      TypesMgr::TypeId t = getTypeDecor(type);
+      tupleTys.push_back(t);
+    }
+    TypesMgr::TypeId tt = Types.createTupleTy(tupleTys);
+    putTypeDecor(ctx, tt);
+  }
   DEBUG_EXIT();
   return 0;
 }

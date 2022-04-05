@@ -2,7 +2,7 @@
 //
 //    TypesMgr - Type System for the Asl programming language
 //
-//    Copyright (C) 2017-2022  Universitat Politecnica de Catalunya
+//    Copyright (C) 2018  Universitat Politecnica de Catalunya
 //
 //    This library is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU General Public License
@@ -70,6 +70,7 @@ public:
 			    TypeId                      returnType);
   TypeId createArrayTy     (unsigned int                size,
 		            TypeId                      elemType);
+  TypeId createTupleTy    (const std::vector<TypeId> & fieldsTypes);
 
   // Accessors to work with primitive and error types
   bool isErrorTy            (TypeId tid) const;
@@ -95,6 +96,11 @@ public:
   bool         isArrayTy        (TypeId tid) const;
   unsigned int getArraySize     (TypeId tid) const;
   TypeId       getArrayElemType (TypeId tid) const;
+
+  // Accessors to work with tuple types
+  bool         isTupleTy         (TypeId tid) const;
+  unsigned int getTupleSize      (TypeId tid) const;
+  TypeId       getTupleFieldType (TypeId tid, unsigned int n) const;
 
   // Methods to check different compatibilities of types
   //   - structurally equal?
@@ -139,6 +145,7 @@ private:
     // Compound data types:
     FunctionKind       ,     // function types
     ArrayKind          ,     // array types
+    TupleKind         ,      // tuple types
   };
 
   // Static attributes:
@@ -172,6 +179,7 @@ private:
 	  TypeId                      returnType);
     Type (unsigned int                arraySize,
 	  TypeId                      arrayElemType);
+    Type (const std::vector<TypeId> & fieldsTypes);
 
     // Destructor
     ~Type () = default;
@@ -203,6 +211,11 @@ private:
     unsigned int getArraySize     () const;
     TypeId       getArrayElemType () const;
 
+    // Accessors to work with tuple types
+    bool         isTupleTy         () const;
+    unsigned int getTupleSize      () const;
+    TypeId       getTupleFieldType (unsigned int n) const;
+    
   private:
 
     // Atributes:
@@ -214,6 +227,8 @@ private:
     //   - to represent the type of an array:
     unsigned int arraySize;
     TypeId arrayElemTy;
+    //   - to represent the type of a tuple:
+    std::vector<TypeId> tupleFieldsTy;
 
   };  // class Type
 

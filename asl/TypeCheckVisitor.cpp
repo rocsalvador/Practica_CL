@@ -101,17 +101,70 @@ antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitTuple(AslParser::TupleContext *ctx) {
+  DEBUG_ENTER();
+  return 0;
+  DEBUG_EXIT();
+}
+
+antlrcpp::Any TypeCheckVisitor::visitTupleAccess(AslParser::TupleAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  if (Types.isTupleTy(t)) {
+    uint i = std::stoi(ctx->INTVAL()->toString());
+    if (i >= Types.getTupleSize(t)) {
+      Errors.nonExistentFieldInTuple(ctx);
+    }
+    else {
+      TypesMgr::TypeId t1 = Types.getTupleFieldType(t, i);
+      putTypeDecor(ctx, t1);
+    }
+  }
+  else {
+    Errors.nonTupleInTupleAccess(ctx);
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitLeftTupleAccess(AslParser::LeftTupleAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t = getTypeDecor(ctx->ident());
+  if (Types.isTupleTy(t)) {
+    uint i = std::stoi(ctx->INTVAL()->toString());
+    if (i >= Types.getTupleSize(t)) {
+      Errors.nonExistentFieldInTuple(ctx);
+    }
+    else {
+      TypesMgr::TypeId t1 = Types.getTupleFieldType(t, i);
+      putTypeDecor(ctx, t1);
+      putIsLValueDecor(ctx, true);
+    }
+  }
+  else {
+    Errors.nonTupleInTupleAccess(ctx);
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitPack(AslParser::PackContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t = getTypeDecor(ctx->ident());
   if (Types.isArrayTy(t)) {
     TypesMgr::TypeId t1 = Types.getArrayElemType(t);
+    uint arraySize = Types.getArraySize(t);
+    if (arraySize != ctx->exprList()->expr().size()) {
+      Errors.packUnpackNumberOfItemsMismatch(ctx);
+    }
     for (uint i = 0; i < ctx->exprList()->expr().size(); ++i) {
       visit(ctx->exprList()->expr(i));
       TypesMgr::TypeId t2 = getTypeDecor(ctx->exprList()->expr(i));
       if (not Types.equalTypes(t1, t2) and
-          not (Types.isIntegerTy(t1) and Types.isFloatTy(t2)) and
+          not (Types.isIntegerTy(t2) and Types.isFloatTy(t1)) and
           not Types.isErrorTy(t2)) {
         Errors.packUnpackIncompatibleTypes(ctx, i+1);
       }
@@ -120,8 +173,8 @@ antlrcpp::Any TypeCheckVisitor::visitPack(AslParser::PackContext *ctx) {
   else {
     Errors.packUnpackWithNonArray(ctx);
   }
-  return 0;
   DEBUG_EXIT();
+  return 0;
 }
 
 antlrcpp::Any TypeCheckVisitor::visitUnpack(AslParser::UnpackContext *ctx) {
@@ -147,8 +200,8 @@ antlrcpp::Any TypeCheckVisitor::visitUnpack(AslParser::UnpackContext *ctx) {
   else {
     Errors.packUnpackWithNonArray(ctx);
   }
-  return 0;
   DEBUG_EXIT();
+  return 0;
 }
 
 // antlrcpp::Any TypeCheckVisitor::visitDeclarations(AslParser::DeclarationsContext *ctx) {
@@ -317,10 +370,12 @@ antlrcpp::Any TypeCheckVisitor::visitUnary(AslParser::UnaryContext *ctx) {
     if (not Types.isErrorTy(t1) and (not Types.isNumericTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
+    else putTypeDecor(ctx, t1);
   } else if (ctx->NOT()) {
     if (not Types.isErrorTy(t1) and (not Types.isBooleanTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
+    else putTypeDecor(ctx, t1);
   }
 
   DEBUG_EXIT();
