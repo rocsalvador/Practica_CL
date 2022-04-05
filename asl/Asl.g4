@@ -81,8 +81,8 @@ type
         ;
 
 packOrUnpack
-        : PACK exprList INTO ID
-        | UNPACK ID INTO exprList
+        : PACK exprList INTO multid
+        | UNPACK multid INTO exprList
         ;
 
 statements

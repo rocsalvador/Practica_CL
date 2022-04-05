@@ -267,10 +267,12 @@ antlrcpp::Any TypeCheckVisitor::visitUnary(AslParser::UnaryContext *ctx) {
     if (not Types.isErrorTy(t1) and (not Types.isNumericTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
+    else putTypeDecor(ctx, t1);
   } else if (ctx->NOT()) {
     if (not Types.isErrorTy(t1) and (not Types.isBooleanTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
+    else putTypeDecor(ctx, t1);
   }
 
   DEBUG_EXIT();
@@ -382,6 +384,46 @@ antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
   else {
     if (isFunctionTy and Types.getNumOfParameters(t) != 0) {
       Errors.numberOfParameters(ctx->ident());
+    }
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitPackUnpack(AslParser::PackUnpackContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->packOrUnpack());
+  int nExpr = ctx->packOrUnpack()->exprList()->expr().size();
+  int nIds = ctx->packOrUnpack()->multid()->ident().size();
+  int nIdPositions = 0;
+  bool nonArrayFound = false;
+  for(int i = 0; not nonArrayFound and i < nIds; ++i) {
+    TypesMgr::TypeId type = getTypeDecor(ctx->packOrUnpack()->multid()->ident(i));
+    if (Types.isArrayTy(type)) {
+      nIdPositions += Types.getArraySize(type);
+    } else {
+      nonArrayFound = true;
+      Errors.packUnpackWithNonArray(ctx);
+    }
+  }
+  if (not nonArrayFound and nExpr != nIdPositions) {
+    Errors.packUnpackNumberOfItemsMismatch(ctx);
+  }
+
+  TypesMgr::TypeId type = getTypeDecor(ctx->packOrUnpack()->multid()->ident(0));
+  if (Types.isArrayTy(type)) {
+    TypesMgr::TypeId tElem = Types.getArrayElemType(type);
+    for(int i = 0; i < nExpr; ++i) {
+      //visit(ctx->packOrUnpack()->exprList()->expr(i));
+      TypesMgr::TypeId tExpr = getTypeDecor(ctx->packOrUnpack()->exprList()->expr(i));
+      if (not Types.equalTypes(tElem, tExpr)) {
+        if (ctx->packOrUnpack()->PACK() and not (Types.isFloatTy(tElem) and Types.isIntegerTy(tExpr)) and not Types.isErrorTy(tExpr)) {
+          Errors.packUnpackIncompatibleTypes(ctx, i+1);
+        } 
+        else if (ctx->packOrUnpack()->UNPACK() and not (Types.isFloatTy(tExpr) and Types.isIntegerTy(tElem)) and not Types.isErrorTy(tExpr)) {
+          Errors.packUnpackIncompatibleTypes(ctx, i+1);
+        }
+      }
     }
   }
   DEBUG_EXIT();
