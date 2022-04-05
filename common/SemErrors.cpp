@@ -2,7 +2,7 @@
 //
 //    SemErrors - Semantic errors for the Asl programming language
 //
-//    Copyright (C) 2017-2022  Universitat Politecnica de Catalunya
+//    Copyright (C) 2018  Universitat Politecnica de Catalunya
 //
 //    This library is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU General Public License
@@ -43,9 +43,8 @@ void SemErrors::print() {
 }
 
 bool SemErrors::less(const ErrorInfo & e1, const ErrorInfo & e2) {
-  if (e1.getLine() != e2.getLine()) return e1.getLine() < e2.getLine();
-  else if (e1.getColumnInLine() != e2.getColumnInLine()) return e1.getColumnInLine() < e2.getColumnInLine();
-  else return e1.getMessage() < e2.getMessage();
+  if (e1.getLine() == e2.getLine()) return e1.getColumnInLine() < e2.getColumnInLine();
+  return e1.getLine() < e2.getLine();
 }
 
 std::size_t SemErrors::getNumberOfSemanticErrors() const {
@@ -146,6 +145,31 @@ void SemErrors::noMainProperlyDeclared(antlr4::ParserRuleContext *ctx) {
   ErrorList.push_back(error);
 }
 
+void SemErrors::numberOfMaxArguments(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Incorrect number of arguments in funtion 'max'.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::incompatibleMaxArguments(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Incompatible argument types in funtion 'max'.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::forRequireIntegerVar(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Integer type required in 'for' control variable.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::numberOfRangeExpressions(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Incorrect number of 'for-range' expressions.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::forRequireIntegerExpr(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Integer types required in 'for-range' expressions.");
+  ErrorList.push_back(error);
+}
+
 SemErrors::ErrorInfo::ErrorInfo(std::size_t line, std::size_t coln, std::string message)
   : line{line}, coln{coln}, message{message} {
 }
@@ -161,8 +185,3 @@ std::size_t SemErrors::ErrorInfo::getLine() const {
 std::size_t SemErrors::ErrorInfo::getColumnInLine() const {
   return coln;
 }
-
-std::string SemErrors::ErrorInfo::getMessage() const {
-  return message;
-}
-
