@@ -82,6 +82,30 @@ antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitForStmt(AslParser::ForStmtContext *ctx) {
+  DEBUG_ENTER();
+
+  visit(ctx->ident());
+  if (not Types.isIntegerTy(getTypeDecor(ctx->ident())) and
+      not Types.isErrorTy(getTypeDecor(ctx->ident()))) {
+    Errors.forRequireIntegerVar(ctx->ident());
+  }
+
+  uint nArgs = ctx->exprList()->expr().size();
+  if (nArgs > 3) {
+    Errors.numberOfRangeExpressions(ctx);
+  }
+
+  for (auto expr : ctx->exprList()->expr()) {
+    visit(expr);
+    TypesMgr::TypeId t1 = getTypeDecor(expr);
+    if (not Types.isIntegerTy(t1)) Errors.forRequireIntegerExpr(expr);
+  }
+  visit(ctx->statements());
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);
@@ -420,7 +444,8 @@ antlrcpp::Any TypeCheckVisitor::visitFuncCall(AslParser::FuncCallContext *ctx) {
       if (isFunctionTy and i < Types.getNumOfParameters(t)) {
         TypesMgr::TypeId paramTy = Types.getParameterType(t, i);
         if (not Types.equalTypes(t1, paramTy) and
-            not (Types.isIntegerTy(t1) and Types.isFloatTy(paramTy)))
+            not (Types.isIntegerTy(t1) and Types.isFloatTy(paramTy)) and
+            not Types.isErrorTy(t1))
         Errors.incompatibleParameter(ctx->exprList()->expr(i), i+1, ctx->ident());
       }
     }
