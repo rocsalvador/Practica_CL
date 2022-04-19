@@ -82,6 +82,16 @@ antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitParenthesis(AslParser::ParenthesisContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->expr());
+  TypesMgr::TypeId t = getTypeDecor(ctx->expr());
+  putTypeDecor(ctx, t);
+  //std::cout << t << std::endl;
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);
@@ -150,6 +160,66 @@ antlrcpp::Any TypeCheckVisitor::visitAssignStmt(AslParser::AssignStmtContext *ct
   DEBUG_EXIT();
   return 0;
 }
+
+antlrcpp::Any TypeCheckVisitor::visitArrayMapStmt(AslParser::ArrayMapStmtContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->left_expr());    //left array (destination)
+  TypesMgr::TypeId arrayType0 = getTypeDecor(ctx->left_expr());
+  uint sizeArray0 = Types.getArraySize(arrayType0);
+  putTypeDecor(ctx, arrayType0);
+
+  visit(ctx->ident(1));       //second array (origin)
+  TypesMgr::TypeId arrayType1 = getTypeDecor(ctx->ident(1));
+  uint sizeArray1 = Types.getArraySize(arrayType1);
+
+  // both arrays same size check--------
+  if (sizeArray0 != sizeArray1) {
+    Errors.mapWithNonArraysOrDifferentSizes(ctx);
+    putTypeDecor(ctx, Types.createErrorTy());
+  }
+
+  TypesMgr::TypeId elemType1 = Types.getArrayElemType(arrayType1);
+
+  visit(ctx->ident(0));      //for variable
+  TypesMgr::TypeId forType = getTypeDecor(ctx->ident(0));
+
+  // for variable typecheck--------
+  if (not Types.isErrorTy(forType) and not Types.equalTypes(forType, elemType1) and not (Types.isIntegerTy(elemType1) and Types.isFloatTy(forType))) {
+    Errors.mapWithIncompatibleControlVar(ctx);
+    putTypeDecor(ctx, Types.createErrorTy());
+  }
+
+  visit(ctx->expr(0));      // bool cond var
+  TypesMgr::TypeId condType = getTypeDecor(ctx->expr(0));
+
+  // bool check--------
+  if (not Types.isBooleanTy(condType) and not Types.isErrorTy(condType)) {
+    Errors.mapWithNonBooleanCondition(ctx);
+        putTypeDecor(ctx, Types.createErrorTy());
+
+  }
+
+  visit(ctx->expr(1));        // exprs vars
+  TypesMgr::TypeId exprType1 = getTypeDecor(ctx->expr(1));
+  visit(ctx->expr(2));
+  TypesMgr::TypeId exprType2 = getTypeDecor(ctx->expr(2));
+
+  TypesMgr::TypeId elemType0 = Types.getArrayElemType(arrayType0);
+
+  // same type as dest array or int to float check-------
+  if ((not Types.isErrorTy(exprType1)) and (not Types.isErrorTy(exprType2)) and
+      (not Types.equalTypes(exprType1, elemType0) and not (Types.isIntegerTy(exprType1) and Types.isFloatTy(elemType0))) or 
+      (not Types.equalTypes(exprType2, elemType0) and not (Types.isIntegerTy(exprType2) and Types.isFloatTy(elemType0)))
+      ) {
+    Errors.mapWithIncompatibleValues(ctx);
+        putTypeDecor(ctx, Types.createErrorTy());
+
+  }
+
+  DEBUG_EXIT();
+  return 0;
+}
+
 
 antlrcpp::Any TypeCheckVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
     DEBUG_ENTER();
@@ -315,7 +385,7 @@ antlrcpp::Any TypeCheckVisitor::visitBoolean(AslParser::BooleanContext *ctx) {
     Errors.incompatibleOperator(ctx->op);
   TypesMgr::TypeId t = Types.createBooleanTy();
   putTypeDecor(ctx, t);
-  putIsLValueDecor(ctx, false);
+  putIsLValueDecor(ctx, true);
   DEBUG_EXIT();
   return 0;
 }

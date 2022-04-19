@@ -34,6 +34,9 @@
 #include <iostream>
 
 #include <cstddef>    // std::size_t
+
+#include <algorithm>  // find
+
 // uncomment to disable assert()
 // #define NDEBUG
 #include <cassert>
@@ -94,6 +97,17 @@ TypesMgr::TypeId TypesMgr::createFunctionTy(const std::vector<TypeId> & paramsTy
 TypesMgr::TypeId TypesMgr::createArrayTy(unsigned int size,
 					 TypeId elemType) {
   TypesVec.push_back(Type{size, elemType});
+  return TypesVec.size()-1;
+}
+
+TypesMgr::TypeId TypesMgr::createEmptyStructTy() {
+  TypesVec.push_back(Type{std::vector<std::string>(), std::vector<TypeId>()});
+  return TypesVec.size()-1;
+}
+
+TypesMgr::TypeId TypesMgr::createStructTy(const std::vector<std::string> & fieldNames,
+					    const std::vector<TypeId> & fieldTypes) {
+  TypesVec.push_back(Type{fieldNames, fieldTypes});
   return TypesVec.size()-1;
 }
 
@@ -198,6 +212,35 @@ TypesMgr::TypeId TypesMgr::getArrayElemType(TypeId tid) const {
 }
 
 // ----------------------------------------------------------------------
+// accessors for working with struct types
+
+void TypesMgr::addStructField(TypeId tidStruct,
+                              const std::string & name, TypeId tidField) {
+  Type & t = TypesVec.at(tidStruct);
+  assert(t.isStructTy());
+  assert(not t.existStructField(name));
+  t.addStructField(name, tidField);
+}
+
+bool TypesMgr::isStructTy(TypeId tid) const {
+  const Type & t = TypesVec.at(tid);
+  return t.isStructTy();
+}
+
+bool TypesMgr::existStructField(TypeId tid, const std::string & name) const {
+  const Type & t = TypesVec.at(tid);
+  assert(t.isStructTy());
+  return t.existStructField(name);
+}
+
+TypesMgr::TypeId TypesMgr::getStructFieldTy(TypeId tid, const std::string & name) const {
+  const Type & t = TypesVec.at(tid);
+  assert(t.isStructTy());
+  assert(t.existStructField(name));
+  return t.getStructFieldTy(name);
+}
+
+// ----------------------------------------------------------------------
 // methods for checking different compatibilities of Types
 
 bool TypesMgr::equalTypes(TypeId tid1, TypeId tid2) const {
@@ -231,6 +274,21 @@ bool TypesMgr::equalTypes(TypeId tid1, TypeId tid2) const {
     TypeId tid1_aux = t1.getArrayElemType();
     TypeId tid2_aux = t2.getArrayElemType();
     return equalTypes(tid1_aux, tid2_aux);
+  }
+  if (t1.isStructTy()) {  // or: if (t2.isStructTy()) {
+    if (t1.getStructNumFields() != t2.getStructNumFields()) {
+      return false;
+    }
+    int nFields = t1.getStructNumFields();
+    for (int i = 0; i < nFields; ++i) {
+      const std::string &    name1 = t1.getStructFieldName(i);
+      TypeId              tid1_aux = t1.getStructFieldTy(i);
+      const std::string &    name2 = t2.getStructFieldName(i);
+      TypeId              tid2_aux = t2.getStructFieldTy(i);
+      if (name1 != name2 or not equalTypes(tid1_aux, tid2_aux))
+	return false;
+    }
+    return true;
   }
   return false;
 }
@@ -266,6 +324,16 @@ std::size_t TypesMgr::getSizeOfType (TypeId tid) const {
     std::size_t nElems = tArr.getArraySize();
     TypeId tElem = tArr.getArrayElemType();
     return nElems * getSizeOfType(tElem);
+  }
+  if (isStructTy(tid)) {
+    const Type & tStruct = TypesVec.at(tid);
+    std::size_t nFields = tStruct.getStructNumFields();
+    int sizeOfStruct = 0;
+    for (std::size_t i = 0; i < nFields; ++i) {
+      TypeId t1 = tStruct.getStructFieldTy(i);
+      sizeOfStruct += getSizeOfType(t1);
+    }
+    return sizeOfStruct;
   }
   return 0;
 }
@@ -307,6 +375,18 @@ std::string TypesMgr::to_string(TypeId tid) const {
     s = s + to_string(tid1) +">";
     return s;
   }
+  else if (t.isStructTy()) {
+    std::string s = "struct<";
+    std::size_t nFields = t.getStructNumFields();
+    for (std::size_t i = 0; i < nFields; ++i) {
+      const std::string & name = t.getStructFieldName(i);
+      TypeId                t1 = t.getStructFieldTy(i);
+      if (i > 0) s += ",";
+      s += name + ":" + to_string(t1);
+    }
+    s += ">";
+    return s;
+  }
   else {
     return "none";
   }
@@ -338,6 +418,13 @@ TypesMgr::Type::Type(unsigned int arraySize, TypeId arrayElemType) :
   ID{TypesMgr::TypeKind::ArrayKind},
   arraySize{arraySize},
   arrayElemTy{arrayElemType} {
+  }
+
+TypesMgr::Type::Type(const std::vector<std::string> & fieldNames,
+		     const std::vector<TypeId> & fieldTypes) :
+  ID{TypesMgr::TypeKind::StructKind},
+  structFieldNames{fieldNames},
+  structFieldTypes{fieldTypes} {
   }
 
 // ----------------------------------------------------------------------
@@ -433,3 +520,44 @@ unsigned int TypesMgr::Type::getArraySize() const {
 TypesMgr::TypeId TypesMgr::Type::getArrayElemType() const {
   return arrayElemTy;
 }
+
+// ----------------------------------------------------------------------
+// accessors for working with struct types
+
+void TypesMgr::Type::addStructField(const std::string & name, TypeId tidField) {
+  assert(not existStructField(name));
+  structFieldNames.push_back(name);
+  structFieldTypes.push_back(tidField);
+}
+
+bool TypesMgr::Type::isStructTy() const {
+  return ID == TypeKind::StructKind;
+}
+
+bool TypesMgr::Type::existStructField(const std::string & name) const {
+  return std::find(structFieldNames.begin(), structFieldNames.end(), name) != structFieldNames.end();
+}
+
+TypesMgr::TypeId TypesMgr::Type::getStructFieldTy(const std::string & name) const {
+  assert(existStructField(name));
+  for (unsigned int i = 0; i < getStructNumFields(); ++i) {
+    if (getStructFieldName(i) == name)
+      return getStructFieldTy(i);
+  }
+  return ErrorTyId;
+}
+
+unsigned int TypesMgr::Type::getStructNumFields() const {
+  return structFieldNames.size();    // or structFieldTypes.size()
+}
+
+const std::string & TypesMgr::Type::getStructFieldName(unsigned int i) const {
+  assert(i < structFieldNames.size());
+  return structFieldNames[i];
+}
+
+TypesMgr::TypeId TypesMgr::Type::getStructFieldTy(unsigned int i) const {
+  assert(i < structFieldTypes.size());
+  return structFieldTypes[i];
+}
+

@@ -70,6 +70,9 @@ public:
 			    TypeId                      returnType);
   TypeId createArrayTy     (unsigned int                size,
 		            TypeId                      elemType);
+  TypeId createEmptyStructTy ();
+  TypeId createStructTy      (const std::vector<std::string> & fieldNames,
+			      const std::vector<TypeId>       & fieldTypes);
 
   // Accessors to work with primitive and error types
   bool isErrorTy            (TypeId tid) const;
@@ -95,6 +98,13 @@ public:
   bool         isArrayTy        (TypeId tid) const;
   unsigned int getArraySize     (TypeId tid) const;
   TypeId       getArrayElemType (TypeId tid) const;
+
+  // Accessors/Mutators to work with struct types
+  void         addStructField     (TypeId tidStruct,
+                                   const std::string & name, TypeId tidField);
+  bool         isStructTy         (TypeId tid) const;
+  bool         existStructField   (TypeId tid, const std::string & name) const;
+  TypeId       getStructFieldTy   (TypeId tid, const std::string & name) const;
 
   // Methods to check different compatibilities of types
   //   - structurally equal?
@@ -139,6 +149,7 @@ private:
     // Compound data types:
     FunctionKind       ,     // function types
     ArrayKind          ,     // array types
+    StructKind         ,     // struct types
   };
 
   // Static attributes:
@@ -172,6 +183,8 @@ private:
 	  TypeId                      returnType);
     Type (unsigned int                arraySize,
 	  TypeId                      arrayElemType);
+    Type (const std::vector<std::string> & fieldNames,
+	  const std::vector<TypeId>      & filedTypes);
 
     // Destructor
     ~Type () = default;
@@ -203,6 +216,15 @@ private:
     unsigned int getArraySize     () const;
     TypeId       getArrayElemType () const;
 
+    // Accessors/mutators to work with struct types
+    void                addStructField     (const std::string & name, TypeId tidField);
+    bool                isStructTy         () const;
+    bool                existStructField   (const std::string & name) const;
+    TypeId              getStructFieldTy   (const std::string & name) const;
+    unsigned int        getStructNumFields () const;
+    const std::string & getStructFieldName (unsigned int i) const;
+    TypeId              getStructFieldTy   (unsigned int i) const;
+
   private:
 
     // Atributes:
@@ -214,6 +236,9 @@ private:
     //   - to represent the type of an array:
     unsigned int arraySize;
     TypeId arrayElemTy;
+    //   - to represent the type of a struct:
+    std::vector<std::string> structFieldNames;
+    std::vector<TypeId>      structFieldTypes;
 
   };  // class Type
 

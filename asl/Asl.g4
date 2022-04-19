@@ -72,12 +72,16 @@ variable_decl
 multid
         : ident (',' ident)* ;
 
+varList
+        : stident ':' type (',' stident ':' type)*
+        ;
 type    
         : INT
         | BOOL
         | FLOAT
         | CHAR
-        | ARRAY '[' INTVAL ']' 'of' type  
+        | ARRAY '[' INTVAL ']' 'of' type
+        | STRUCT '{' varList '}'
         ;
 
 statements
@@ -90,6 +94,7 @@ statement
         : funcCall ';'                                          # funcCallStmt
           // Assignment
         | left_expr ASSIGN expr ';'                             # assignStmt
+        | left_expr ASSIGN '[' expr '?' expr ':' expr FOR ident IN ident ']' ';'     #arrayMapStmt
           // if-then-else statement (else is optional)
         | IF expr THEN statements (ELSE statements)? ENDIF      # ifStmt
         | WHILE expr DO statements ENDWHILE                     # whileStmt
@@ -106,26 +111,31 @@ statement
 // Grammar for left expressions (l-values in C++)
 left_expr
         : ident '[' expr ']'                            # leftArrayAccess
+        | ident '.' stident                               # leftStructAccess
         | ident                                         # leftExprIdent
         ;       
 
 // Grammar for expressions with boolean, relational and aritmetic operators
-expr    : '(' expr ')'                                  # parenthesis
-        | op=(PLUS|MINUS|NOT) expr                      # unary
-        | expr op=(MUL|DIV|MOD) expr                    # arithmetic
-        | expr op=(PLUS|MINUS) expr                     # arithmetic
-        | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr          # relational
-        | expr op=AND expr                              # boolean
-        | expr op=OR expr                               # boolean
+expr    : ident '[' expr ']'                            # arrayAccess
+        | ident '.' stident                               # structAccess
+        | ident                                         # exprIdent
+        | '(' expr ')'                                  # parenthesis
         | INTVAL                                        # value
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
+        | expr op=(MUL|DIV|MOD) expr                    # arithmetic
+        | expr op=(PLUS|MINUS) expr                     # arithmetic
+        | op=(PLUS|MINUS|NOT) expr                      # unary
+        | expr op=AND expr                              # boolean
+        | expr op=(EQUAL|NEQ|GT|GE|LT|LE) expr          # relational
+        | expr op=OR expr                               # boolean
         | funcCall                                      # funcAccess
-        | ident '[' expr ']'                            # arrayAccess
-        | ident                                         # exprIdent
         ;
 
 // Identifiers
 ident   : ID
+        ;
+        
+stident : ID
         ;
 
 //////////////////////////////////////////////////
@@ -134,7 +144,7 @@ ident   : ID
 
 ASSIGN      : '=' ;
 
-EQUAL		: '==' ;
+EQUAL	    : '==' ;
 NEQ         : '!=' ;
 GT          : '>' ;
 GE          : '>=' ;
@@ -171,6 +181,11 @@ RETURN  	: 'return' ;
 
 READ      	: 'read' ;
 WRITE     	: 'write' ;
+
+FOR             : 'for' ;
+IN             : 'in' ;
+
+STRUCT          : 'struct' ;
 
 fragment
 DIGIT   	: ('0'..'9') ;
