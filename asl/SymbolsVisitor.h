@@ -74,6 +74,7 @@ public:
   // antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);
   // antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   // antlrcpp::Any visitExprIdent(AslParser::ExprIdentContext *ctx);
+  // antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
   antlrcpp::Any visitArithmetic(AslParser::ArithmeticContext *ctx);
   // antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
   // antlrcpp::Any visitValue(AslParser::ValueContext *ctx);

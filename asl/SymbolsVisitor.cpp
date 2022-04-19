@@ -144,6 +144,15 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
   return 0;
 }
 
+// antlrcpp::Any SymbolsVisitor::visitParenthesis(AslParser::ParenthesisContext *ctx) {
+//   DEBUG_ENTER();
+//   visit(ctx->expr());
+//   TypesMgr::TypeId t = getTypeDecor(ctx->expr());
+//   putTypeDecor(ctx, t);
+//   DEBUG_EXIT();
+//   return 0;
+// }
+
 antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
   DEBUG_ENTER();
   if (ctx->INT()) {
