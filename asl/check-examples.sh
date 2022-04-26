@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# export LD_LIBRARY_PATH=$HOME/assig/cl/runtime/lib
-export LD_LIBRARY_PATH=/usr/include/antlr4-runtime/
+if [ -d $HOME/assig/cl/runtime/lib ]; then 
+    export LD_LIBRARY_PATH=$HOME/assig/cl/runtime/lib
+else
+    export LD_LIBRARY_PATH=/usr/include/antlr4-runtime/
+fi
 
 #--------------------------------------------
 function check_chkt_example() {
