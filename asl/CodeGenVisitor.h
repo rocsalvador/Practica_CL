@@ -70,8 +70,9 @@ public:
   // antlrcpp::Any visitType(AslParser::TypeContext *ctx);
   antlrcpp::Any visitStatements(AslParser::StatementsContext *ctx);
   antlrcpp::Any visitAssignStmt(AslParser::AssignStmtContext *ctx);
+  antlrcpp::Any visitFuncCallStmt(AslParser::FuncCallStmtContext *ctx);
   antlrcpp::Any visitIfStmt(AslParser::IfStmtContext *ctx);
-  antlrcpp::Any visitProcCall(AslParser::ProcCallContext *ctx);
+  //antlrcpp::Any visitProcCall(AslParser::ProcCallContext *ctx);
   antlrcpp::Any visitReadStmt(AslParser::ReadStmtContext *ctx);
   antlrcpp::Any visitWriteExpr(AslParser::WriteExprContext *ctx);
   antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);

@@ -96,7 +96,6 @@ statement
           // Read a variable
         | READ left_expr ';'                                    # readStmt
           // Write an expression
-        | ident '(' ')' ';'                                     # procCall
         | WRITE expr ';'                                        # writeExpr
           // Write a string
         | WRITE STRING ';'                                      # writeString

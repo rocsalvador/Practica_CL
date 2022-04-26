@@ -101,8 +101,10 @@ antlrcpp::Any CodeGenVisitor::visitDeclarations(AslParser::DeclarationsContext *
   DEBUG_ENTER();
   std::vector<var> lvars;
   for (auto & varDeclCtx : ctx->variable_decl()) {
-    var onevar = visit(varDeclCtx);
-    lvars.push_back(onevar);
+    std::vector<var> varsInOneLine = visit(varDeclCtx);
+    for (auto & onevar : varsInOneLine) {
+      lvars.push_back(onevar);
+    }
   }
   DEBUG_EXIT();
   return lvars;
@@ -110,11 +112,14 @@ antlrcpp::Any CodeGenVisitor::visitDeclarations(AslParser::DeclarationsContext *
 
 antlrcpp::Any CodeGenVisitor::visitVariable_decl(AslParser::Variable_declContext *ctx) {
   DEBUG_ENTER();
+  std::vector<var> lvarsInOneLine;
   TypesMgr::TypeId   t1 = getTypeDecor(ctx->type());
-  std::size_t      size = Types.getSizeOfType(t1);
+  for (uint i = 0; i < ctx->multid()->ident().size(); ++i) {
+    std::size_t size = Types.getSizeOfType(t1);
+    lvarsInOneLine.push_back(var{ctx->multid()->ident(i)->getText(), size});
+  }
   DEBUG_EXIT();
-  // TO-DO: iterate through all idents
-  return var{ctx->multid()->ident(0)->ID()->getText(), size};
+  return lvarsInOneLine;
 }
 
 antlrcpp::Any CodeGenVisitor::visitStatements(AslParser::StatementsContext *ctx) {
@@ -146,6 +151,16 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   return code;
 }
 
+antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code;
+  std::string name = ctx->funcCall()->ident()->ID()->getText();
+  code = instruction::CALL(name);
+  //TO-DO: parameters
+  DEBUG_EXIT();
+  return code;
+}
+
 antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   DEBUG_ENTER();
   instructionList code;
@@ -161,15 +176,11 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   return code;
 }
 
-antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
-  DEBUG_ENTER();
-  instructionList code;
-  // std::string name = ctx->ident()->ID()->getSymbol()->getText();
-  std::string name = ctx->ident()->getText();
-  code = instruction::CALL(name);
-  DEBUG_EXIT();
-  return code;
-}
+// antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
+//   DEBUG_ENTER();
+  
+//   return code;
+// }
 
 antlrcpp::Any CodeGenVisitor::visitReadStmt(AslParser::ReadStmtContext *ctx) {
   DEBUG_ENTER();
