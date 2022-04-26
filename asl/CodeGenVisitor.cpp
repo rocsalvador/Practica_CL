@@ -113,7 +113,8 @@ antlrcpp::Any CodeGenVisitor::visitVariable_decl(AslParser::Variable_declContext
   TypesMgr::TypeId   t1 = getTypeDecor(ctx->type());
   std::size_t      size = Types.getSizeOfType(t1);
   DEBUG_EXIT();
-  return var{ctx->multid()->getText(), size};
+  // TO-DO: iterate through all idents
+  return var{ctx->multid()->ident(0)->ID()->getText(), size};
 }
 
 antlrcpp::Any CodeGenVisitor::visitStatements(AslParser::StatementsContext *ctx) {
@@ -151,7 +152,7 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   CodeAttribs     && codAtsE = visit(ctx->expr());
   std::string          addr1 = codAtsE.addr;
   instructionList &    code1 = codAtsE.code;
-  instructionList &&   code2 = visit(ctx->statements(0));
+  instructionList &&   code2 = visit(ctx->statements(0)); 
   std::string label = codeCounters.newLabelIF();
   std::string labelEndIf = "endif"+label;
   code = code1 || instruction::FJUMP(addr1, labelEndIf) ||
@@ -205,11 +206,17 @@ antlrcpp::Any CodeGenVisitor::visitWriteString(AslParser::WriteStringContext *ct
   return code;
 }
 
-antlrcpp::Any CodeGenVisitor::visitLeft_expr(AslParser::Left_exprContext *ctx) {
+antlrcpp::Any CodeGenVisitor::visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx) {
   DEBUG_ENTER();
-  // CodeAttribs && codAts = visit(ctx->ident());
-  // TODO
-  CodeAttribs && codAts = visitChildren(ctx);
+  CodeAttribs && codAts = visit(ctx->ident());
+  DEBUG_EXIT();
+  return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx) {
+  DEBUG_ENTER();
+  // TO-DO: visit correctly
+  CodeAttribs && codAts = visit(ctx->ident());
   DEBUG_EXIT();
   return codAts;
 }
@@ -279,6 +286,12 @@ antlrcpp::Any CodeGenVisitor::visitIdent(AslParser::IdentContext *ctx) {
   return codAts;
 }
 
+antlrcpp::Any CodeGenVisitor::visitParenthesis(AslParser::ParenthesisContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs && codAts = visit(ctx->expr());
+  DEBUG_EXIT();
+  return codAts;
+}
 
 // Getters for the necessary tree node atributes:
 //   Scope and Type
