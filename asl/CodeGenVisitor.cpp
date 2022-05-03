@@ -86,13 +86,22 @@ antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   Symbols.pushThisScope(sc);
   subroutine subr(ctx->ID()->getText());
   codeCounters.reset();
+  if (ctx->paramsDef()) {
+    for (auto param : ctx->paramsDef()->parameter()) {
+      subr.add_param(param->ID()->getText());
+    }
+  }
   std::vector<var> && lvars = visit(ctx->declarations());
   for (auto & onevar : lvars) {
     subr.add_var(onevar);
   }
   instructionList && code = visit(ctx->statements());
-  code = code || instruction(instruction::RETURN());
   subr.set_instructions(code);
+
+  if (not ctx->retType()) {
+    instructionList && code = instruction::RETURN();
+    subr.add_instructions(code);
+  }
   Symbols.popScope();
   DEBUG_EXIT();
   return subr;
@@ -156,10 +165,33 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
   DEBUG_ENTER();
   instructionList code;
   std::string name = ctx->funcCall()->ident()->ID()->getText();
-  code = instruction::CALL(name);
-  //TO-DO: parameters
+  if (ctx->funcCall()->exprList()) {
+    for (auto param : ctx->funcCall()->exprList()->expr()) {
+      CodeAttribs     && paramAttr = visit(param);
+      code = code || instruction::PUSH(paramAttr.addr);
+    }
+  }
+  code = code || instruction::CALL(name);
   DEBUG_EXIT();
   return code;
+}
+
+antlrcpp::Any CodeGenVisitor::visitFuncAccess(AslParser::FuncAccessContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code;
+  std::string name = ctx->funcCall()->ident()->ID()->getText();
+  if (ctx->funcCall()->exprList()) {
+    for (auto param : ctx->funcCall()->exprList()->expr()) {
+      CodeAttribs     && paramAttr = visit(param);
+      code = code || instruction::PUSH(paramAttr.addr);
+    }
+  }
+  code = code || instruction::CALL(name);
+  std::string newTmp = "%" + codeCounters.newTEMP();
+  code = code || instruction::POP(newTmp);
+  CodeAttribs codeAttr(newTmp, "", code);
+  DEBUG_EXIT();
+  return codeAttr;
 }
 
 antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
@@ -200,6 +232,18 @@ antlrcpp::Any CodeGenVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx) {
   
 //   return code;
 // }
+
+antlrcpp::Any CodeGenVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code;
+  if (ctx->expr()) {
+    CodeAttribs && exprAttr = visit(ctx->expr());
+    code = exprAttr.code || instruction::PUSH(exprAttr.addr);
+  }
+  code = code || instruction::RETURN();
+  DEBUG_EXIT();
+  return code;
+}
 
 antlrcpp::Any CodeGenVisitor::visitReadStmt(AslParser::ReadStmtContext *ctx) {
   DEBUG_ENTER();
