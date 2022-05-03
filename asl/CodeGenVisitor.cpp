@@ -177,6 +177,24 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   return code;
 }
 
+antlrcpp::Any CodeGenVisitor::visitWhileStmt(AslParser::WhileStmtContext *ctx) {
+  DEBUG_ENTER();
+  instructionList code;
+  CodeAttribs     && codAtsE = visit(ctx->expr());
+  std::string          addr1 = codAtsE.addr;
+  instructionList &    code1 = codAtsE.code;
+  instructionList &&   code2 = visit(ctx->statements()); 
+  std::string label = codeCounters.newLabelWHILE();
+  std::string labelStartWhile = "startwhile"+label;
+  std::string labelEndWhile = "endwhile"+label;
+  code = instruction::LABEL(labelStartWhile) || 
+        code1 || instruction::FJUMP(addr1, labelEndWhile) ||
+        code2 || instruction::UJUMP(labelStartWhile) ||
+        instruction::LABEL(labelEndWhile);
+  DEBUG_EXIT();
+  return code;
+}
+
 // antlrcpp::Any CodeGenVisitor::visitProcCall(AslParser::ProcCallContext *ctx) {
 //   DEBUG_ENTER();
   
@@ -269,6 +287,17 @@ antlrcpp::Any CodeGenVisitor::visitArithmetic(AslParser::ArithmeticContext *ctx)
       code = code || instruction::FDIV(temp, temp1, temp2);
     else if (ctx->MINUS()) 
       code = code || instruction::FSUB(temp, temp1, temp2);
+    else if (ctx->MOD()) {
+      // dividend = divisor *. quotient +. remainder
+      std::string tempQuotient = "%"+codeCounters.newTEMP();
+      code = code || instruction::FDIV(tempQuotient, addr1, addr2);
+
+      std::string tempDxQ = "%"+codeCounters.newTEMP();
+      code = code || instruction::FMUL(tempDxQ, tempQuotient, addr2);
+
+      // temp contains the remainder
+      code = code || instruction::FSUB(temp, addr1, tempDxQ);
+    }
   }
   else {
     if (ctx->MUL())
@@ -280,7 +309,15 @@ antlrcpp::Any CodeGenVisitor::visitArithmetic(AslParser::ArithmeticContext *ctx)
     else if (ctx->MINUS()) 
       code = code || instruction::SUB(temp, addr1, addr2);
     else if (ctx->MOD()) {
-      // TODO mod
+      // dividend = divisor *. quotient +. remainder
+      std::string tempQuotient = "%"+codeCounters.newTEMP();
+      code = code || instruction::DIV(tempQuotient, addr1, addr2);
+
+      std::string tempDxQ = "%"+codeCounters.newTEMP();
+      code = code || instruction::MUL(tempDxQ, tempQuotient, addr2);
+
+      // temp contains the remainder
+      code = code || instruction::SUB(temp, addr1, tempDxQ);
     }
   }
 
@@ -377,7 +414,15 @@ antlrcpp::Any CodeGenVisitor::visitValue(AslParser::ValueContext *ctx) {
   DEBUG_ENTER();
   instructionList code;
   std::string temp = "%"+codeCounters.newTEMP();
-  code = instruction::ILOAD(temp, ctx->getText());
+  if (ctx->BOOLVAL()) {
+    if (ctx->BOOLVAL()->getText() == "true") {
+      code = instruction::ILOAD(temp, "1");
+    } else {
+      code = instruction::ILOAD(temp, "0");
+    }
+  } else {
+    code = instruction::ILOAD(temp, ctx->getText());
+  }
   CodeAttribs codAts(temp, "", code);
   DEBUG_EXIT();
   return codAts;
