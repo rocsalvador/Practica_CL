@@ -207,6 +207,7 @@ antlrcpp::Any CodeGenVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx) {
   if (Types.isIntegerTy(tid1))          code = code1 || instruction::WRITEI(addr1);
   else if (Types.isFloatTy(tid1))       code = code1 || instruction::WRITEF(addr1);
   else if (Types.isCharacterTy(tid1))   code = code1 || instruction::WRITEC(addr1);
+  else if (Types.isBooleanTy(tid1))     code = code1 || instruction::WRITEI(addr1);
   else                                  code = code1 || instruction::WRITES(addr1);
   DEBUG_EXIT();
   return code;
