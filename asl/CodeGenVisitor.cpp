@@ -168,7 +168,7 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
   if (ctx->funcCall()->exprList()) {
     for (auto param : ctx->funcCall()->exprList()->expr()) {
       CodeAttribs     && paramAttr = visit(param);
-      code = code || instruction::PUSH(paramAttr.addr);
+      code = code || paramAttr.code || instruction::PUSH(paramAttr.addr);
     }
   }
   code = code || instruction::CALL(name);
@@ -183,7 +183,7 @@ antlrcpp::Any CodeGenVisitor::visitFuncAccess(AslParser::FuncAccessContext *ctx)
   if (ctx->funcCall()->exprList()) {
     for (auto param : ctx->funcCall()->exprList()->expr()) {
       CodeAttribs     && paramAttr = visit(param);
-      code = code || instruction::PUSH(paramAttr.addr);
+      code = code || paramAttr.code || instruction::PUSH(paramAttr.addr);
     }
   }
   code = code || instruction::CALL(name);
