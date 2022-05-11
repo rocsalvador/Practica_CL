@@ -105,6 +105,23 @@ public:
   //   ctx is the program node (grammar start symbol) 
   void noMainProperlyDeclared       (antlr4::ParserRuleContext *ctx);
 
+  //// *** MAP OF ARRAYS ***
+  //   ctx is the node corresponding to the map instruction
+  void mapWithNonArraysOrDifferentSizes (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to the map instruction
+  void mapWithIncompatibleControlVar    (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to the map instruction
+  void mapWithNonBooleanCondition       (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to the map instruction
+  void mapWithIncompatibleValues        (antlr4::ParserRuleContext *ctx);
+
+  //// *** STRUCTS ***
+  //   ctx is the node corresponding to a struct access
+  void structAccessWithNonExistentField (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to a struct access
+  void structAccessWithNonStruct        (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to a struct declaration
+  void structRedeclaresFieldName        (antlr4::ParserRuleContext *ctx);
 
 private:
 

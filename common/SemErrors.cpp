@@ -146,6 +146,42 @@ void SemErrors::noMainProperlyDeclared(antlr4::ParserRuleContext *ctx) {
   ErrorList.push_back(error);
 }
 
+void SemErrors::mapWithNonArraysOrDifferentSizes(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Instruction 'map' with non arrays operands or with arrays of different size.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::mapWithIncompatibleControlVar(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Instruction 'map' with incompatible control variable.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::mapWithNonBooleanCondition(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Instruction 'map' with non-boolean condition.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::mapWithIncompatibleValues(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Instruction 'map' with incompatible assigned expression(s).");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::structAccessWithNonExistentField(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Struct access to a non existent field name.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::structAccessWithNonStruct(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Struct access to a non struct operand.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::structRedeclaresFieldName(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Struct with some field already declared.");
+  ErrorList.push_back(error);
+}
+
+
 SemErrors::ErrorInfo::ErrorInfo(std::size_t line, std::size_t coln, std::string message)
   : line{line}, coln{coln}, message{message} {
 }
@@ -165,4 +201,3 @@ std::size_t SemErrors::ErrorInfo::getColumnInLine() const {
 std::string SemErrors::ErrorInfo::getMessage() const {
   return message;
 }
-

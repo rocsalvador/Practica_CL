@@ -144,15 +144,6 @@ antlrcpp::Any SymbolsVisitor::visitVariable_decl(AslParser::Variable_declContext
   return 0;
 }
 
-// antlrcpp::Any SymbolsVisitor::visitParenthesis(AslParser::ParenthesisContext *ctx) {
-//   DEBUG_ENTER();
-//   visit(ctx->expr());
-//   TypesMgr::TypeId t = getTypeDecor(ctx->expr());
-//   putTypeDecor(ctx, t);
-//   DEBUG_EXIT();
-//   return 0;
-// }
-
 antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
   DEBUG_ENTER();
   if (ctx->INT()) {
@@ -178,6 +169,27 @@ antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
     uint size = stoi(ctx->INTVAL()->getText());
     TypesMgr::TypeId t = Types.createArrayTy(size, arrayType);
     putTypeDecor(ctx, t);
+  }
+  else if(ctx->STRUCT()) {
+    std::vector<std::string> fieldNames;
+    for (auto ident : ctx->structTy()->ident()) {
+      std::string fieldName = ident->ID()->toString();
+      bool found = false;
+      for (auto name : fieldNames) {
+        if (name == fieldName) {
+          found = true;
+          break;
+        }
+      }
+      if (not found) fieldNames.push_back(fieldName);
+      else Errors.structRedeclaresFieldName(ctx);
+    }
+    std::vector<TypesMgr::TypeId> types;
+    for (auto type : ctx->structTy()->type()) {
+      visit(type);
+      types.push_back(getTypeDecor(type));
+    }
+    putTypeDecor(ctx, Types.createStructTy(fieldNames, types));
   }
   DEBUG_EXIT();
   return 0;

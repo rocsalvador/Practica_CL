@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "AslParser.h"
 #include "antlr4-runtime.h"
 #include "AslBaseVisitor.h"
 
@@ -76,7 +77,6 @@ public:
   antlrcpp::Any visitWriteExpr(AslParser::WriteExprContext *ctx);
   antlrcpp::Any visitFuncCall(AslParser::FuncCallContext *ctx);
   antlrcpp::Any visitReturnStmt(AslParser::ReturnStmtContext *ctx);
-  antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
   // antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);
   // antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   antlrcpp::Any visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx);
@@ -86,8 +86,12 @@ public:
   antlrcpp::Any visitUnary(AslParser::UnaryContext *ctx);
   antlrcpp::Any visitBoolean(AslParser::BooleanContext *ctx);
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
+  antlrcpp::Any visitArrayMapStmt(AslParser::ArrayMapStmtContext *ctx);
+  antlrcpp::Any visitStructAccess(AslParser::StructAccessContext *ctx);
+  antlrcpp::Any visitLeftStructAccess(AslParser::LeftStructAccessContext *ctx);
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
+  antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
 
 private:
 
