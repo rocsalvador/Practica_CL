@@ -96,8 +96,9 @@ antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   for (auto & onevar : lvars) {
     subr.add_var(onevar);
   }
+
   instructionList && code = visit(ctx->statements());
-  subr.set_instructions(code);
+  subr.add_instructions(code);
 
   if (not ctx->retType()) {
     instructionList && code = instruction::RETURN();
@@ -193,6 +194,12 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
     }
   }
   code = code || instruction::CALL(name);
+
+  if (ctx->funcCall()->exprList()) {
+    for (auto params : ctx->funcCall()->exprList()->expr()) {
+      code = code || instruction::POP("");
+    }
+  }
   DEBUG_EXIT();
   return code;
 }
@@ -201,15 +208,30 @@ antlrcpp::Any CodeGenVisitor::visitFuncAccess(AslParser::FuncAccessContext *ctx)
   DEBUG_ENTER();
   instructionList code;
   std::string name = ctx->funcCall()->ident()->ID()->getText();
+  auto paramsTypes = Types.getFuncParamsTypes(Symbols.getGlobalFunctionType(name));
   if (ctx->funcCall()->exprList()) {
-    for (auto param : ctx->funcCall()->exprList()->expr()) {
+    for (uint i = 0; i < ctx->funcCall()->exprList()->expr().size(); ++i) {
+      auto param = ctx->funcCall()->exprList()->expr(i);
       CodeAttribs     && paramAttr = visit(param);
-      code = code || paramAttr.code || instruction::PUSH(paramAttr.addr);
+      code = code || paramAttr.code;
+      // FIRST THINNG TO CHECK/TODO
+      std::string tempFloat = paramAttr.addr;
+      TypesMgr::TypeId paramTy = getTypeDecor(param);
+      if (Types.isIntegerTy(paramTy) && Types.isFloatTy(paramsTypes[i])) {
+        tempFloat = "%" + codeCounters.newTEMP();
+        code = code || instruction::FLOAT(tempFloat, paramAttr.addr);
+      }
+      code = code || instruction::PUSH(tempFloat);
     }
   }
   code = code || instruction::CALL(name);
   std::string newTmp = "%" + codeCounters.newTEMP();
   code = code || instruction::POP(newTmp);
+  if (ctx->funcCall()->exprList()) {
+    for (auto params : ctx->funcCall()->exprList()->expr()) {
+      code = code || instruction::POP("");
+    }
+  }
   CodeAttribs codeAttr(newTmp, "", code);
   DEBUG_EXIT();
   return codeAttr;
