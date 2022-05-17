@@ -199,6 +199,10 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
   DEBUG_ENTER();
   instructionList code;
   std::string name = ctx->funcCall()->ident()->ID()->getText();
+  auto functionTy = Symbols.getGlobalFunctionType(name);
+  if (not Types.isVoidFunction(functionTy)) {
+    code = code || instruction::PUSH();
+  }
   auto paramsTypes = Types.getFuncParamsTypes(Symbols.getGlobalFunctionType(name));
   
   if (ctx->funcCall()->exprList()) {
@@ -206,7 +210,6 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
       auto param = ctx->funcCall()->exprList()->expr(i);
       CodeAttribs     && paramAttr = visit(param);
       code = code || paramAttr.code;
-      // FIRST THINNG TO CHECK/TODO
       std::string tempFloat = paramAttr.addr;
       TypesMgr::TypeId paramTy = getTypeDecor(param);
       if (Types.isIntegerTy(paramTy) && Types.isFloatTy(paramsTypes[i])) {
@@ -223,6 +226,9 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
       code = code || instruction::POP("");
     }
   }
+  if (not Types.isVoidFunction(functionTy)) {
+    code = code || instruction::POP();
+  }
   DEBUG_EXIT();
   return code;
 }
@@ -232,10 +238,7 @@ antlrcpp::Any CodeGenVisitor::visitFuncAccess(AslParser::FuncAccessContext *ctx)
   instructionList code;
   std::string name = ctx->funcCall()->ident()->ID()->getText();
   auto paramsTypes = Types.getFuncParamsTypes(Symbols.getGlobalFunctionType(name));
-  
-  // make space for function result
   code = code || instruction::PUSH();
-  
   if (ctx->funcCall()->exprList()) {
     for (uint i = 0; i < ctx->funcCall()->exprList()->expr().size(); ++i) {
       auto param = ctx->funcCall()->exprList()->expr(i);
@@ -252,13 +255,11 @@ antlrcpp::Any CodeGenVisitor::visitFuncAccess(AslParser::FuncAccessContext *ctx)
     }
   }
   code = code || instruction::CALL(name);
-
   if (ctx->funcCall()->exprList()) {
     for (uint i = 0; i < ctx->funcCall()->exprList()->expr().size(); ++i) {
       code = code || instruction::POP();
     }
   }
-  
   std::string newTmp = "%" + codeCounters.newTEMP();
   code = code || instruction::POP(newTmp);
   CodeAttribs codeAttr(newTmp, "", code);
