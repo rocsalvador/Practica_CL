@@ -173,7 +173,7 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
     code = code || instruction::XLOAD(temp, offs1, addr2);
   } else {
     // Assignment coercion
-    if (Types.isIntegerTy(tidRight)) {
+    if (Types.isIntegerTy(tidRight) && not Types.isFloatTy(tidLeft)) {
       code = code || instruction::ILOAD(temp, addr2);
     } 
     else if (Types.isCharacterTy(tidRight)) {
@@ -182,6 +182,11 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
     else if (Types.isFloatTy(tidRight)) {
       code = code || instruction::FLOAD(temp, addr2);
     } 
+    else if (Types.isFloatTy(tidLeft)) {
+      std::string tempFloat = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempFloat, addr2);
+      code = code || instruction::FLOAD(temp, tempFloat);
+    }
     else if (Types.isArrayTy(tidRight)) {
       // còpia per valor
       // és això el que volem?
