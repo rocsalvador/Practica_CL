@@ -192,14 +192,36 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
     else if (Types.isArrayTy(tidRight)) {
       // còpia per valor
       // és això el que volem?
-      code = code || instruction::LOADC(temp, addr2);
+      std::string leftArrayTemp = addr1;
+      if (Symbols.isParameterClass(addr1)) {
+        leftArrayTemp = "%" + codeCounters.newTEMP();
+        code = code || instruction::LOAD(leftArrayTemp, addr1);
+      }
+
+      std::string rightArrayTemp = addr2;
+      if (Symbols.isParameterClass(addr2)) {
+        rightArrayTemp = "%" + codeCounters.newTEMP();
+        code = code || instruction::LOAD(rightArrayTemp, addr2);
+      }
+
+      std::string arraySize = std::to_string(Types.getArraySize(tidRight));
+      std::string auxTemp = "%" + codeCounters.newTEMP();
+      std::string labelNum = codeCounters.newLabelWHILE();
+      std::string startWhileLabel = "startarraycopy" + labelNum;
+      std::string endWhileLabel = "endarraycopy" + labelNum;
+      std::string conditionTemp = "%" + codeCounters.newTEMP();
+      std::string indexTemp = "%" + codeCounters.newTEMP();
+      std::string arraySizeTemp = "%" + codeCounters.newTEMP();
+      std::string oneTemp = "%" + codeCounters.newTEMP();
+
+      code = code || instruction::ILOAD(arraySizeTemp, arraySize) || instruction::ILOAD(oneTemp, "1") || instruction::ILOAD(indexTemp, "0");
+      code = code || instruction::LABEL(startWhileLabel) || instruction::LT(conditionTemp, indexTemp, arraySizeTemp);
+      code = code || instruction::FJUMP(conditionTemp, endWhileLabel) || instruction::LOADX(auxTemp, rightArrayTemp, indexTemp);
+      code = code || instruction::XLOAD(leftArrayTemp, indexTemp, auxTemp) || instruction::ADD(indexTemp, indexTemp, oneTemp);
+      code = code || instruction::UJUMP(startWhileLabel) || instruction::LABEL(endWhileLabel);
     }
     else {
       code = code || instruction::LOAD(temp, addr2);
-    }
-
-    if (Types.isArrayTy(tidLeft)) {
-      code = code || instruction::CLOAD(addr1, temp);
     }
   }
   DEBUG_EXIT();
