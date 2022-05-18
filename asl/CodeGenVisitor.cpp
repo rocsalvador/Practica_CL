@@ -89,6 +89,8 @@ antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   codeCounters.reset();
 
   if (ctx->retType()) {
+    TypesMgr::TypeId retTy = getTypeDecor(ctx->retType()->type());
+    setCurrentFunctionTy(retTy);
     subr.add_param("_result");
   }
 
@@ -254,7 +256,12 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
       // Check array type
       else if (Types.isArrayTy(passedParamTy)) {
         temp = "%" + codeCounters.newTEMP();
-        code = code || instruction::ALOAD(temp, paramAttr.addr);
+        if (Symbols.isParameterClass(paramAttr.addr)) {
+          code = code || instruction::LOAD(temp, paramAttr.addr);
+        }
+        else {
+          code = code || instruction::ALOAD(temp, paramAttr.addr);
+        }
       }
 
       // Push parameter to stack
@@ -297,7 +304,12 @@ antlrcpp::Any CodeGenVisitor::visitFuncAccess(AslParser::FuncAccessContext *ctx)
       // Check array type
       else if (Types.isArrayTy(passedParamTy)) {
         temp = "%" + codeCounters.newTEMP();
-        code = code || instruction::ALOAD(temp, paramAttr.addr);
+        if (Symbols.isParameterClass(paramAttr.addr)) {
+          code = code || instruction::LOAD(temp, paramAttr.addr);
+        }
+        else {
+          code = code || instruction::ALOAD(temp, paramAttr.addr);
+        }
       }
       code = code || instruction::PUSH(temp);
     }
@@ -371,7 +383,15 @@ antlrcpp::Any CodeGenVisitor::visitReturnStmt(AslParser::ReturnStmtContext *ctx)
   instructionList code;
   if (ctx->expr()) {
     CodeAttribs && exprAttr = visit(ctx->expr());
-    code = exprAttr.code || instruction::LOAD("_result", exprAttr.addr);
+    std::string retTemp = exprAttr.addr;
+    auto exprTy = getTypeDecor(ctx->expr());
+    auto functionTy = getCurrentFunctionTy();
+    code = exprAttr.code;
+    if (Types.isIntegerTy(exprTy) and Types.isFloatTy(functionTy)) {
+      retTemp = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(retTemp, exprAttr.addr);
+    }
+    code = code || instruction::LOAD("_result", retTemp);
   }
   code = code || instruction::RETURN();
   DEBUG_EXIT();
@@ -460,7 +480,14 @@ antlrcpp::Any CodeGenVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessCon
   std::string addrTemp = addrId;
   if (Symbols.isParameterClass(addrId)) {
     addrTemp = "%" + codeCounters.newTEMP();
-    code = code || instruction::LOAD(addrTemp, addrId);
+    auto idTy = getTypeDecor(ctx->ident());
+    auto arrayTy = Types.getArrayElemType(idTy);
+    if (Types.isFloatTy(arrayTy)) {
+      code = code || instruction::FLOAD(addrTemp, addrId);
+    }
+    else {
+      code = code || instruction::LOAD(addrTemp, addrId);
+    }
   }
   CodeAttribs codAts(addrTemp, addrExpr, code);
   DEBUG_EXIT();
