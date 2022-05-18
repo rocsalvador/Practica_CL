@@ -168,10 +168,6 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   std::string temp = addr1;
   code = code1 || code2;
   if (offs1 != "" ) {
-    if (Symbols.isParameterClass(addr1)) {
-      temp = "%" + codeCounters.newTEMP();
-      code = code || instruction::LOAD(temp, addr1);
-    }
     code = code || instruction::XLOAD(temp, offs1, addr2);
   } else {
     // Assignment coercion
@@ -179,7 +175,7 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
       code = code || instruction::ILOAD(temp, addr2);
     } 
     else if (Types.isCharacterTy(tidRight)) {
-      code = code || instruction::CHLOAD(temp, addr2);
+      code = code || instruction::LOAD(temp, addr2);
     } 
     else if (Types.isFloatTy(tidRight)) {
       code = code || instruction::FLOAD(temp, addr2);
@@ -459,8 +455,14 @@ antlrcpp::Any CodeGenVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessCon
   std::string         addrId = codAtsId.addr;
   CodeAttribs && codAtsExpr = visit(ctx->expr());
   std::string         addrExpr = codAtsExpr.addr;
-
-  CodeAttribs codAts(addrId, addrExpr, codAtsExpr.code);
+  instructionList code;
+  code = code || codAtsExpr.code;
+  std::string addrTemp = addrId;
+  if (Symbols.isParameterClass(addrId)) {
+    addrTemp = "%" + codeCounters.newTEMP();
+    code = code || instruction::LOAD(addrTemp, addrId);
+  }
+  CodeAttribs codAts(addrTemp, addrExpr, code);
   DEBUG_EXIT();
   return codAts;
 }
@@ -565,7 +567,7 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
     else if (ctx->GE()) code = code || instruction::FLE(temp, temp2, temp1);
     else if (ctx->LT()) code = code || instruction::FLT(temp, temp1, temp2);
     else if (ctx->LE()) code = code || instruction::FLE(temp, temp1, temp2);
-    else if (ctx->NEQ()) code = code || instruction::FEQ(temp, temp1, temp2) || instruction::NEG(temp, temp);
+    else if (ctx->NEQ()) code = code || instruction::FEQ(temp, temp1, temp2) || instruction::NOT(temp, temp);
   }
   else {
     if (ctx->EQUAL()) code = code || instruction::EQ(temp, addr1, addr2);
@@ -573,7 +575,7 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
     else if (ctx->GE()) code = code || instruction::LE(temp, addr2, addr1);
     else if (ctx->LT()) code = code || instruction::LT(temp, addr1, addr2);
     else if (ctx->LE()) code = code || instruction::LE(temp, addr1, addr2);
-    else if (ctx->NEQ()) code = code || instruction::EQ(temp, addr1, addr2) || instruction::NEG(temp, temp);
+    else if (ctx->NEQ()) code = code || instruction::EQ(temp, addr1, addr2) || instruction::NOT(temp, temp);
   }
   CodeAttribs codAts(temp, "", code);
   DEBUG_EXIT();
