@@ -271,8 +271,8 @@ antlrcpp::Any CodeGenVisitor::visitFuncCallStmt(AslParser::FuncCallStmtContext *
   code = code || instruction::CALL(funcName);
 
   if (ctx->funcCall()->exprList()) {
-    for (auto params : ctx->funcCall()->exprList()->expr()) {
-      code = code || instruction::POP("");
+    for (uint i = 0; i < ctx->funcCall()->exprList()->expr().size(); ++i) {
+      code = code || instruction::POP();
     }
   }
   if (not Types.isVoidFunction(functionTy)) {
