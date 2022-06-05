@@ -97,6 +97,13 @@ TypesMgr::TypeId TypesMgr::createArrayTy(unsigned int size,
   return TypesVec.size()-1;
 }
 
+TypesMgr::TypeId TypesMgr::createMatrixTy(unsigned int rows,
+                                          unsigned int cols,
+					 TypeId elemType) {
+  TypesVec.push_back(Type{rows, cols, elemType});
+  return TypesVec.size()-1;
+}
+
 // ----------------------------------------------------------------------
 // accessors for working with primitive types
 
@@ -198,6 +205,38 @@ TypesMgr::TypeId TypesMgr::getArrayElemType(TypeId tid) const {
 }
 
 // ----------------------------------------------------------------------
+// accessors for working with matrix types
+
+bool TypesMgr::isMatrixTy(TypeId tid) const {
+  const Type & t = TypesVec.at(tid);
+  return t.isMatrixTy();
+}
+
+unsigned int TypesMgr::getMatrixSize(TypeId tid) const {
+  const Type & t = TypesVec.at(tid);
+  assert(t.isMatrixTy());
+  return t.getMatrixSize();
+}
+
+unsigned int TypesMgr::getMatrixRows(TypeId tid) const {
+  const Type & t = TypesVec.at(tid);
+  assert(t.isMatrixTy());
+  return t.getMatrixRows();
+}
+
+unsigned int TypesMgr::getMatrixCols(TypeId tid) const {
+  const Type & t = TypesVec.at(tid);
+  assert(t.isMatrixTy());
+  return t.getMatrixCols();
+}
+
+TypesMgr::TypeId TypesMgr::getMatrixElemType(TypeId tid) const {
+  const Type & t = TypesVec.at(tid);
+  assert(t.isMatrixTy());
+  return t.getMatrixElemType();
+}
+
+// ----------------------------------------------------------------------
 // methods for checking different compatibilities of Types
 
 bool TypesMgr::equalTypes(TypeId tid1, TypeId tid2) const {
@@ -230,6 +269,14 @@ bool TypesMgr::equalTypes(TypeId tid1, TypeId tid2) const {
     }
     TypeId tid1_aux = t1.getArrayElemType();
     TypeId tid2_aux = t2.getArrayElemType();
+    return equalTypes(tid1_aux, tid2_aux);
+  }
+  if (t1.isMatrixTy()) {  // or: if (t2.isArrayTy()) {
+    if (t1.getMatrixRows() != t2.getMatrixRows() or t1.getMatrixCols() != t2.getMatrixCols()) {
+      return false;
+    }
+    TypeId tid1_aux = t1.getMatrixElemType();
+    TypeId tid2_aux = t2.getMatrixElemType();
     return equalTypes(tid1_aux, tid2_aux);
   }
   return false;
@@ -265,6 +312,12 @@ std::size_t TypesMgr::getSizeOfType (TypeId tid) const {
     const Type & tArr = TypesVec.at(tid);
     std::size_t nElems = tArr.getArraySize();
     TypeId tElem = tArr.getArrayElemType();
+    return nElems * getSizeOfType(tElem);
+  }
+  if (isMatrixTy(tid)) {
+    const Type & tMat = TypesVec.at(tid);
+    std::size_t nElems = tMat.getMatrixSize();
+    TypeId tElem = tMat.getMatrixElemType();
     return nElems * getSizeOfType(tElem);
   }
   return 0;
@@ -307,6 +360,13 @@ std::string TypesMgr::to_string(TypeId tid) const {
     s = s + to_string(tid1) +">";
     return s;
   }
+  else if (t.isMatrixTy()) {
+    TypeId tid1;
+    std::string s = "matrix<" + std::to_string(t.getMatrixRows()) + "," + std::to_string(t.getMatrixCols()) + "," ;
+    tid1 = t.getMatrixElemType();
+    s = s + to_string(tid1) +">";
+    return s;
+  }
   else {
     return "none";
   }
@@ -338,6 +398,14 @@ TypesMgr::Type::Type(unsigned int arraySize, TypeId arrayElemType) :
   ID{TypesMgr::TypeKind::ArrayKind},
   arraySize{arraySize},
   arrayElemTy{arrayElemType} {
+  }
+
+TypesMgr::Type::Type(unsigned int matrixRows, unsigned int matrixCols, TypeId matrixElemType) :
+  ID{TypesMgr::TypeKind::MatrixKind},
+  matrixSize{matrixCols*matrixRows},
+  matrixRows{matrixRows},
+  matrixCols{matrixCols},
+  matrixElemTy{matrixElemType} {
   }
 
 // ----------------------------------------------------------------------
@@ -432,4 +500,27 @@ unsigned int TypesMgr::Type::getArraySize() const {
 
 TypesMgr::TypeId TypesMgr::Type::getArrayElemType() const {
   return arrayElemTy;
+}
+
+// ----------------------------------------------------------------------
+// accessors for working with matrix types
+
+bool TypesMgr::Type::isMatrixTy() const {
+  return ID == TypeKind::MatrixKind;
+}
+
+unsigned int TypesMgr::Type::getMatrixSize() const {
+  return matrixSize;
+}
+
+unsigned int TypesMgr::Type::getMatrixRows() const {
+  return matrixRows;
+}
+
+unsigned int TypesMgr::Type::getMatrixCols() const {
+  return matrixCols;
+}
+
+TypesMgr::TypeId TypesMgr::Type::getMatrixElemType() const {
+  return matrixElemTy;
 }

@@ -1,0 +1,4 @@
+Line 7:12 error: Operator '+' with incompatible types.
+Line 11:8 error: Assignment with incompatible types.
+Line 11:10 error: Operator 'not' with incompatible types.
+Line 17:6 error: Array access to a non array operand.

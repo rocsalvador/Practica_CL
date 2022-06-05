@@ -34,6 +34,7 @@
 #include "TypesMgr.h"
 #include "SymTable.h"
 
+
 /// predeclaration
 class instructionList;
 class LLVMCodeGen;
@@ -44,7 +45,7 @@ class LLVMCodeGen;
 class instruction {
 public:
   /// instruction codes
-  typedef enum {_LABEL, _UJUMP, _FJUMP, _PUSH, _POP, _CALL, _RETURN,
+  typedef enum {_LABEL, _UJUMP, _FJUMP, _HALT, _PUSH, _POP, _CALL, _RETURN,
                 _ADD, _SUB, _MUL, _DIV, _EQ, _LT, _LE, _NEG, _NOT, _AND, _OR, _FLOAT,
                 _FADD, _FSUB, _FMUL, _FDIV, _FEQ, _FLT, _FLE, _FNEG,
                 _LOAD, _ILOAD, _CHLOAD, _FLOAD, _XLOAD, _LOADX, _ALOAD, _LOADC, _CLOAD,
@@ -73,6 +74,8 @@ public:
   static instruction UJUMP(const std::string &a1);
   // create new instruction "ifFalse a1 goto a2"
   static instruction FJUMP(const std::string &a1, const std::string &a2);
+  // create new instruction "halt"
+  static instruction HALT(const std::string &a1="");
   // create new instruction "pushparam a1"
   static instruction PUSH(const std::string &a1="");
   // create new instruction "popparam a1"
@@ -277,6 +280,12 @@ public:
   std::string dump() const;
   /// print the code in LLVM IR
   std::string dumpLLVM(const TypesMgr & Types, const SymTable &Symbols) const;
+  
+  // Error codes for "HALT" instruction
+  static const std::string INDEX_OUT_OF_RANGE;
+  static const std::string INVALID_INTEGER_OPERAND;
+  static const std::string INVALID_FLOAT_OPERAND;
+
 };
 
 

@@ -87,6 +87,16 @@ void SemErrors::nonIntegerIndexInArrayAccess(antlr4::ParserRuleContext *ctx) {
   ErrorList.push_back(error);
 }
 
+void SemErrors::nonMatrixInMatrixAccess(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Matrix access to a non matrix operand.");
+  ErrorList.push_back(error);
+}
+
+void SemErrors::nonIntegerIndexInMatrixAccess(antlr4::ParserRuleContext *ctx) {
+  ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Matrix access with non integer index.");
+  ErrorList.push_back(error);
+}
+
 void SemErrors::booleanRequired(antlr4::ParserRuleContext *ctx) {
   ErrorInfo error(ctx->getStart()->getLine(), ctx->getStart()->getCharPositionInLine(), "Instruction '" + ctx->getStart()->getText() + "' requires a boolean condition.");
   ErrorList.push_back(error);

@@ -48,6 +48,7 @@ instruction::instruction(Operation op,
 instruction instruction::LABEL(const std::string &a1) { return instruction(_LABEL, a1); }
 instruction instruction::UJUMP(const std::string &a1) { return instruction(_UJUMP, a1); }
 instruction instruction::FJUMP(const std::string &a1, const std::string &a2) { return instruction(_FJUMP, a1, a2); }
+instruction instruction::HALT(const std::string &a1) { return instruction(_HALT, a1); }
 instruction instruction::PUSH(const std::string &a1) { return instruction(_PUSH, a1); }
 instruction instruction::POP(const std::string &a1) { return instruction(_POP, a1); }
 instruction instruction::CALL(const std::string &a1) { return instruction(_CALL, a1); }
@@ -102,7 +103,8 @@ string instruction::dump() const {
   case instruction::_LABEL : { s = "label " + arg1 + " :"; ind = ""; break; }
   case instruction::_UJUMP : { s = "goto " + arg1; break; }
   case instruction::_FJUMP : { s = "ifFalse " + arg1 + " goto " +arg2; break; }
-  case instruction::_LOAD : 
+  case instruction::_HALT  : { s = "halt \"" + arg1 + "\""; break; }
+  case instruction::_LOAD  : 
   case instruction::_FLOAD : 
   case instruction::_ILOAD : { s = arg1 + " = " + arg2; break; } 
   case instruction::_CHLOAD : { s = arg1 + " = '" + arg2 +"'"; break; } 
@@ -267,6 +269,11 @@ string subroutine::dump() const {
 
 ////////////////////////////////////////////////////////////////////
 /// Implementation for class 'code'
+
+// Error codes for "HALT" instruction
+const string code::INDEX_OUT_OF_RANGE = "Container index out of range.";
+const string code::INVALID_INTEGER_OPERAND = "Invalid integer value in math operation.";
+const string code::INVALID_FLOAT_OPERAND = "Invalid float value in math operation.";
 
 /// constructor
 code::code() {};

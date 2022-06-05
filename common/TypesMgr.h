@@ -70,6 +70,9 @@ public:
 			    TypeId                      returnType);
   TypeId createArrayTy     (unsigned int                size,
 		            TypeId                      elemType);
+  TypeId createMatrixTy     (unsigned int                rows,
+                             unsigned int                cols,
+		            TypeId                      elemType);
 
   // Accessors to work with primitive and error types
   bool isErrorTy            (TypeId tid) const;
@@ -95,6 +98,13 @@ public:
   bool         isArrayTy        (TypeId tid) const;
   unsigned int getArraySize     (TypeId tid) const;
   TypeId       getArrayElemType (TypeId tid) const;
+
+  // Accessors to work with matrix types
+  bool         isMatrixTy        (TypeId tid) const;
+  unsigned int getMatrixSize     (TypeId tid) const;
+  unsigned int getMatrixRows     (TypeId tid) const;
+  unsigned int getMatrixCols     (TypeId tid) const;
+  TypeId       getMatrixElemType (TypeId tid) const;
 
   // Methods to check different compatibilities of types
   //   - structurally equal?
@@ -139,6 +149,7 @@ private:
     // Compound data types:
     FunctionKind       ,     // function types
     ArrayKind          ,     // array types
+    MatrixKind         ,     // matrix types
   };
 
   // Static attributes:
@@ -172,6 +183,9 @@ private:
 	  TypeId                      returnType);
     Type (unsigned int                arraySize,
 	  TypeId                      arrayElemType);
+    Type (unsigned int                matrixRows,
+          unsigned int                matrixCols,
+	  TypeId                      matrixElemType);
 
     // Destructor
     ~Type () = default;
@@ -203,6 +217,13 @@ private:
     unsigned int getArraySize     () const;
     TypeId       getArrayElemType () const;
 
+    // Accessors to work with array types
+    bool         isMatrixTy        () const;
+    unsigned int getMatrixSize     () const;
+    unsigned int getMatrixRows     () const;
+    unsigned int getMatrixCols     () const;
+    TypeId       getMatrixElemType () const;
+
   private:
 
     // Atributes:
@@ -214,6 +235,11 @@ private:
     //   - to represent the type of an array:
     unsigned int arraySize;
     TypeId arrayElemTy;
+    //   - to represent the type of a matrix:
+    unsigned int matrixSize;
+    unsigned int matrixRows;
+    unsigned int matrixCols;
+    TypeId matrixElemTy;
 
   };  // class Type
 

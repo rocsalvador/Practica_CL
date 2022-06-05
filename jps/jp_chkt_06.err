@@ -1,0 +1,10 @@
+Line 8:8 error: Assignment with incompatible types.
+Line 14:25 error: Operator '+' with incompatible types.
+Line 15:24 error: Operator 'and' with incompatible types.
+Line 15:28 error: Identifier 'f' is undeclared.
+Line 19:6 error: Array access to a non array operand.
+Line 19:19 error: Matrix access with non integer index.
+Line 19:22 error: Operator '+' with incompatible types.
+Line 19:35 error: Operator 'not' with incompatible types.
+Line 23:11 error: Matrix access with non integer index.
+Line 23:17 error: Matrix access to a non matrix operand.
