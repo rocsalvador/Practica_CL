@@ -77,6 +77,7 @@ public:
   antlrcpp::Any visitFuncCall(AslParser::FuncCallContext *ctx);
   antlrcpp::Any visitReturnStmt(AslParser::ReturnStmtContext *ctx);
   antlrcpp::Any visitParenthesis(AslParser::ParenthesisContext *ctx);
+  antlrcpp::Any visitFactorial(AslParser::FactorialContext *ctx);
   // antlrcpp::Any visitWriteString(AslParser::WriteStringContext *ctx);
   // antlrcpp::Any visitLeft_expr(AslParser::Left_exprContext *ctx);
   antlrcpp::Any visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx);

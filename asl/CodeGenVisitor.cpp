@@ -40,7 +40,7 @@
 #include <cstddef>    // std::size_t
 
 // uncomment the following line to enable debugging messages with DEBUG*
-// #define DEBUG_BUILD
+//  #define DEBUG_BUILD
 #include "../common/debug.h"
 #include "support/Any.h"
 
@@ -345,7 +345,7 @@ antlrcpp::Any CodeGenVisitor::visitIfStmt(AslParser::IfStmtContext *ctx) {
   if (ctx->ELSE()) {
     std::string labelElse = "else"+label;
     instructionList &&   codeElse = visit(ctx->statements(1)); 
-
+//
     code = codeCond || instruction::FJUMP(addrCond, labelElse) ||
           codeThen || instruction::UJUMP(labelEndIf) || 
           instruction::LABEL(labelElse) || codeElse ||
@@ -615,6 +615,47 @@ antlrcpp::Any CodeGenVisitor::visitRelational(AslParser::RelationalContext *ctx)
     else if (ctx->NEQ()) code = code || instruction::EQ(temp, addr1, addr2) || instruction::NOT(temp, temp);
   }
   CodeAttribs codAts(temp, "", code);
+  DEBUG_EXIT();
+  return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitFactorial(AslParser::FactorialContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs &&   codeAt = visit(ctx->expr());
+  std::string       addr1 = codeAt.addr;
+  instructionList & code1 = codeAt.code;
+  instructionList &  code = code1;
+
+  std::string       addr2 = addr1;
+  std::string temp = "%"+codeCounters.newTEMP();
+
+  std::string labelNum = codeCounters.newLabelWHILE();
+  std::string startWhileLabel = "startfactwhile" + labelNum;
+  std::string endWhileLabel = "endfactwhile" + labelNum;
+  std::string conditionTemp = "%" + codeCounters.newTEMP();
+  std::string currentNumTemp = "%" + codeCounters.newTEMP();
+  std::string currentResultTemp = "%" + codeCounters.newTEMP();
+  std::string oneTemp = "%" + codeCounters.newTEMP();
+
+  std::string conditionHaltTemp = "%" + codeCounters.newTEMP();
+  std::string zeroTemp = "%" + codeCounters.newTEMP();
+  std::string labelNumIf = codeCounters.newLabelIF();
+  std::string notNegativeLabel = "notNegative"+labelNumIf;
+
+  code = code || instruction::ILOAD(zeroTemp, "0") || instruction::LT(conditionHaltTemp, addr1, zeroTemp);
+  code = code || instruction::FJUMP(conditionHaltTemp, notNegativeLabel);
+  code = code || instruction::HALT(code::INVALID_INTEGER_OPERAND);
+
+  code = code || instruction::LABEL(notNegativeLabel);
+  code = code || instruction::ILOAD(oneTemp, "1") || instruction::ILOAD(currentResultTemp, oneTemp);
+  code = code || instruction::ILOAD(currentNumTemp, addr1);
+  code = code || instruction::LABEL(startWhileLabel) || instruction::LT(conditionTemp, oneTemp, currentNumTemp);
+  code = code || instruction::FJUMP(conditionTemp, endWhileLabel) || instruction::MUL(currentResultTemp, currentNumTemp, currentResultTemp);
+  code = code || instruction::SUB(currentNumTemp, currentNumTemp, oneTemp);
+  code = code || instruction::UJUMP(startWhileLabel) || instruction::LABEL(endWhileLabel);
+
+
+  CodeAttribs codAts(currentResultTemp, "", code);
   DEBUG_EXIT();
   return codAts;
 }
