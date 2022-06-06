@@ -82,6 +82,41 @@ antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitPower(AslParser::PowerContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->expr(0));
+  visit(ctx->expr(1));
+  TypesMgr::TypeId baseTy = getTypeDecor(ctx->expr(0));
+  TypesMgr::TypeId expoTy = getTypeDecor(ctx->expr(1));
+  if (not Types.isNumericTy(baseTy) or not Types.isIntegerTy(expoTy)) {
+    Errors.incompatibleOperator(ctx->op);
+  }
+  putTypeDecor(ctx, Types.createFloatTy());
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitMapStmt(AslParser::MapStmtContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident(0));
+  visit(ctx->ident(1));
+  visit(ctx->ident(2));
+  TypesMgr::TypeId srcArrayTy = getTypeDecor(ctx->ident(0));
+  TypesMgr::TypeId outArrayTy = getTypeDecor(ctx->ident(1));
+  TypesMgr::TypeId funcTy = getTypeDecor(ctx->ident(2));
+  if (not Types.isArrayTy(srcArrayTy) or not Types.isArrayTy(outArrayTy) or
+      Types.getArraySize(srcArrayTy) != Types.getArraySize(outArrayTy) or
+      not Types.isFunctionTy(funcTy) or Types.getFuncParamsTypes(funcTy).size() != 1 or
+      (not Types.equalTypes(Types.getFuncParamsTypes(funcTy)[0], Types.getArrayElemType(srcArrayTy)) and
+      not Types.isFloatTy(Types.getFuncParamsTypes(funcTy)[0]) and not Types.isIntegerTy(Types.getArrayElemType(srcArrayTy))) or
+      (not Types.equalTypes(Types.getFuncReturnType(funcTy), Types.getArrayElemType(outArrayTy)) and
+      not Types.isIntegerTy(Types.getFuncReturnType(funcTy)) and not Types.isFloatTy(outArrayTy))) {
+    Errors.incompatibleMapOperands(ctx);
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);

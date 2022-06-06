@@ -81,6 +81,87 @@ antlrcpp::Any CodeGenVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   return my_code;
 }
 
+antlrcpp::Any CodeGenVisitor::visitPower(AslParser::PowerContext *ctx) {
+    DEBUG_ENTER();
+    instructionList code;
+    CodeAttribs     && codAtsE1 = visit(ctx->expr(0));
+    std::string           addr1 = codAtsE1.addr;
+    std::string           offs1 = codAtsE1.offs;
+    instructionList &     code1 = codAtsE1.code;
+    TypesMgr::TypeId    tidLeft = getTypeDecor(ctx->expr(0));
+
+    CodeAttribs     && codAtsE2 = visit(ctx->expr(1));
+    std::string           addr2 = codAtsE2.addr;
+    std::string           offs2 = codAtsE2.offs;
+    instructionList &     code2 = codAtsE2.code;
+
+    std::string resultTemp = "%" + codeCounters.newTEMP();
+    std::string labelNum = codeCounters.newLabelWHILE();
+    std::string startWhileLabel = "startpower" + labelNum;
+    std::string endWhileLabel = "endpower" + labelNum;
+    std::string conditionTemp = "%" + codeCounters.newTEMP();
+    std::string indexTemp = "%" + codeCounters.newTEMP();
+    std::string oneTemp = "%" + codeCounters.newTEMP();
+    std::string baseTemp = addr1;
+
+    code = code1 || code2;
+    if (Types.isIntegerTy(tidLeft)) {
+      baseTemp = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(baseTemp, addr1);
+    }
+    code = code || instruction::ILOAD(oneTemp, "1") || instruction::ILOAD(indexTemp, "0") || instruction::FLOAD(resultTemp, "1.0");
+    code = code || instruction::LABEL(startWhileLabel) || instruction::LT(conditionTemp, indexTemp, addr2) || instruction::FJUMP(conditionTemp, endWhileLabel);
+    code = code || instruction::FMUL(resultTemp, resultTemp, baseTemp) || instruction::ADD(indexTemp, indexTemp, oneTemp);
+    code = code || instruction::UJUMP(startWhileLabel) || instruction::LABEL(endWhileLabel);
+
+    CodeAttribs codAts(resultTemp, "", code);
+    DEBUG_EXIT();
+    return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitMapStmt(AslParser::MapStmtContext *ctx) {
+    std::string funcName = ctx->ident(2)->getText();
+
+    instructionList code;
+    TypesMgr::TypeId srcArrayTy = getTypeDecor(ctx->ident(0));
+    TypesMgr::TypeId outArrayTy = getTypeDecor(ctx->ident(1));
+    TypesMgr::TypeId funcTy = Symbols.getGlobalFunctionType(funcName);
+    TypesMgr::TypeId paramTy = Types.getFuncParamsTypes(funcTy)[0];
+    TypesMgr::TypeId passedParamTy = Types.getArrayElemType(srcArrayTy);
+    TypesMgr::TypeId outArrayElemTy = Types.getArrayElemType(outArrayTy);
+
+    std::string arraySize = std::to_string(Types.getArraySize(srcArrayTy));
+    std::string auxTemp = "%" + codeCounters.newTEMP();
+    std::string labelNum = codeCounters.newLabelWHILE();
+    std::string startWhileLabel = "startmap" + labelNum;
+    std::string endWhileLabel = "endmap" + labelNum;
+    std::string conditionTemp = "%" + codeCounters.newTEMP();
+    std::string indexTemp = "%" + codeCounters.newTEMP();
+    std::string arraySizeTemp = "%" + codeCounters.newTEMP();
+    std::string oneTemp = "%" + codeCounters.newTEMP();
+
+    code = code || instruction::ILOAD(arraySizeTemp, arraySize) || instruction::ILOAD(oneTemp, "1") || instruction::ILOAD(indexTemp, "0");
+    code = code || instruction::LABEL(startWhileLabel) || instruction::LT(conditionTemp, indexTemp, arraySizeTemp) || instruction::FJUMP(conditionTemp, endWhileLabel);
+
+    code = code || instruction::PUSH();
+    std::string paramTemp = "%" + codeCounters.newTEMP();
+    code = code || instruction::LOADX(paramTemp, ctx->ident(0)->getText(), indexTemp);
+    if (Types.isIntegerTy(passedParamTy) && Types.isFloatTy(paramTy)) {
+      code = code || instruction::FLOAT(paramTemp, paramTemp);
+    }
+    code = code || instruction::PUSH(paramTemp);
+    code = code || instruction::CALL(funcName);
+    code = code || instruction::POP();
+    std::string retTemp = "%" + codeCounters.newTEMP();
+    code = code || instruction::POP(retTemp);
+    if (Types.isIntegerTy(Types.getFuncReturnType(funcTy)) and Types.isFloatTy(outArrayElemTy)) {
+      code = code || instruction::FLOAT(retTemp, retTemp);
+    }
+    code = code || instruction::XLOAD(ctx->ident(1)->getText(), indexTemp, retTemp);
+    code = code || instruction::ADD(indexTemp, indexTemp, oneTemp) || instruction::UJUMP(startWhileLabel) || instruction::LABEL(endWhileLabel);
+    return code;
+}
+
 antlrcpp::Any CodeGenVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);

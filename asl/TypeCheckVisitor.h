@@ -88,6 +88,8 @@ public:
   antlrcpp::Any visitRelational(AslParser::RelationalContext *ctx);
   antlrcpp::Any visitValue(AslParser::ValueContext *ctx);
   antlrcpp::Any visitIdent(AslParser::IdentContext *ctx);
+  antlrcpp::Any visitPower(AslParser::PowerContext *ctx);
+  antlrcpp::Any visitMapStmt(AslParser::MapStmtContext *ctx);
 
 private:
 

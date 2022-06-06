@@ -2,7 +2,7 @@
 //
 //    SemErrors - Semantic errors for the Asl programming language
 //
-//    Copyright (C) 2017-2022  Universitat Politecnica de Catalunya
+//    Copyright (C) 2019  Universitat Politecnica de Catalunya
 //
 //    This library is free software; you can redistribute it and/or
 //    modify it under the terms of the GNU General Public License
@@ -105,6 +105,8 @@ public:
   //   ctx is the program node (grammar start symbol) 
   void noMainProperlyDeclared       (antlr4::ParserRuleContext *ctx);
 
+  //   ctx is the map instruction
+  void incompatibleMapOperands      (antlr4::ParserRuleContext *ctx);
 
 private:
 
@@ -114,7 +116,6 @@ private:
     ErrorInfo(std::size_t line, std::size_t coln, std::string message);
     std::size_t getLine() const;
     std::size_t getColumnInLine() const;
-    std::string getMessage() const;
     void print() const;
   private:
     std::size_t line, coln;

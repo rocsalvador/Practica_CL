@@ -100,6 +100,7 @@ statement
           // Write a string
         | WRITE STRING ';'                                      # writeString
         | RETURN expr? ';'                                      # returnStmt
+        | MAP ident INTO ident USING ident ';'                  # mapStmt
         ;
 
 // Grammar for left expressions (l-values in C++)
@@ -114,6 +115,7 @@ expr    : ident '[' expr ']'                            # arrayAccess
         | '(' expr ')'                                  # parenthesis
         | INTVAL                                        # value
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
+        | expr op=POW expr                              # power
         | op=(PLUS|MINUS|NOT) expr                      # unary
         | expr op=(MUL|DIV|MOD) expr                    # arithmetic
         | expr op=(PLUS|MINUS) expr                     # arithmetic
@@ -145,6 +147,7 @@ MINUS       : '-' ;
 MUL         : '*' ;
 DIV         : '/' ;
 MOD         : '%' ;
+POW         : '**' ;
 
 NOT         : 'not' ;
 AND     	: 'and' ;
@@ -167,6 +170,9 @@ ENDWHILE    : 'endwhile';
 FUNC      	: 'func' ;
 ENDFUNC   	: 'endfunc' ;
 RETURN  	: 'return' ;
+MAP         : 'map' ;
+INTO        : 'into' ;
+USING       : 'using' ;
 
 READ      	: 'read' ;
 WRITE     	: 'write' ;
