@@ -171,6 +171,11 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   std::string temp = addr1;
   code = code1 || code2;
   if (offs1 != "" ) {
+    std::string tempFloat = addr2;
+    if (Types.isFloatTy(tidLeft) and Types.isIntegerTy(tidRight)) {
+      tempFloat = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempFloat, addr2);
+    }
     code = code || instruction::XLOAD(temp, offs1, addr2);
   } else {
     // Assignment coercion
