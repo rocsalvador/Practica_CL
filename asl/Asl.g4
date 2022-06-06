@@ -114,6 +114,7 @@ expr    : ident '[' expr ']'                            # arrayAccess
         | '(' expr ')'                                  # parenthesis
         | INTVAL                                        # value
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
+        | expr op=POW expr                              # power
         | op=(PLUS|MINUS|NOT) expr                      # unary
         | expr op=(MUL|DIV|MOD) expr                    # arithmetic
         | expr op=(PLUS|MINUS) expr                     # arithmetic
@@ -145,6 +146,7 @@ MINUS       : '-' ;
 MUL         : '*' ;
 DIV         : '/' ;
 MOD         : '%' ;
+POW         : '**' ;
 
 NOT         : 'not' ;
 AND     	: 'and' ;
