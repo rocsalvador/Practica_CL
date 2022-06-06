@@ -1,0 +1,4 @@
+loop 9 40
+loop 720 362878
+-10
+VM_CRASH: Execution halted: Invalid integer value in math operation.

@@ -78,6 +78,7 @@ type
         | FLOAT
         | CHAR
         | ARRAY '[' INTVAL ']' 'of' type  
+        | MATRIX '[' INTVAL ',' INTVAL ']' 'of' type
         ;
 
 statements
@@ -105,14 +106,17 @@ statement
 // Grammar for left expressions (l-values in C++)
 left_expr
         : ident '[' expr ']'                            # leftArrayAccess
+        | ident '[' expr ',' expr ']'                   # leftMatrixAccess
         | ident                                         # leftExprIdent
         ;       
 
 // Grammar for expressions with boolean, relational and aritmetic operators
 expr    : ident '[' expr ']'                            # arrayAccess
+        | ident '[' expr ',' expr ']'               # matrixAccess
         | ident                                         # exprIdent
         | '(' expr ')'                                  # parenthesis
         | INTVAL                                        # value
+        | expr op=FACT                                  # factorial
         | (FLOATVAL|CHARVAL|BOOLVAL)                    # value
         | op=(PLUS|MINUS|NOT) expr                      # unary
         | expr op=(MUL|DIV|MOD) expr                    # arithmetic
@@ -140,6 +144,7 @@ GE          : '>=' ;
 LT          : '<' ;
 LE          : '<=' ;
 
+FACT        : '!';
 PLUS        : '+' ;
 MINUS       : '-' ;
 MUL         : '*' ;
@@ -156,6 +161,7 @@ BOOL       	: 'bool' ;
 FLOAT       : 'float' ;
 CHAR       	: 'char' ;
 ARRAY   	: 'array' ;
+MATRIX      : 'matrix' ;
 
 IF        	: 'if' ;
 THEN      	: 'then' ;

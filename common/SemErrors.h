@@ -73,6 +73,10 @@ public:
   void nonArrayInArrayAccess        (antlr4::ParserRuleContext *ctx);
   //   ctx is the node corresponding to the index expression in an array access
   void nonIntegerIndexInArrayAccess (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to an matrix access
+  void nonMatrixInMatrixAccess      (antlr4::ParserRuleContext *ctx);
+  //   ctx is the node corresponding to the index expression in an matrix access
+  void nonIntegerIndexInMatrixAccess (antlr4::ParserRuleContext *ctx);
   //   ctx is the node corresponding to the expression
   void booleanRequired              (antlr4::ParserRuleContext *ctx);
   //   ctx is the node corresponding to the function identifier 

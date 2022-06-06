@@ -82,6 +82,71 @@ antlrcpp::Any TypeCheckVisitor::visitProgram(AslParser::ProgramContext *ctx) {
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitFactorial(AslParser::FactorialContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->expr());
+  TypesMgr::TypeId exprTy = getTypeDecor(ctx->expr());
+  if (not Types.isIntegerTy(exprTy)) Errors.incompatibleOperator(ctx->op);
+  putTypeDecor(ctx, Types.createIntegerTy());
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitLeftMatrixAccess(AslParser::LeftMatrixAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  visit(ctx->expr(0));
+  visit(ctx->expr(1));
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  if (not Types.isErrorTy(t1)) {
+    if (not Types.isMatrixTy(t1)) {
+        Errors.nonMatrixInMatrixAccess(ctx);
+        putTypeDecor(ctx, Types.createErrorTy());
+    }
+    else putTypeDecor(ctx, Types.getMatrixElemType(t1));
+    visit(ctx->expr(0));
+    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr(0));
+    TypesMgr::TypeId t3 = getTypeDecor(ctx->expr(1));
+    if (not Types.isIntegerTy(t2))
+      Errors.nonIntegerIndexInMatrixAccess(ctx->expr(0));
+    if (not Types.isIntegerTy(t3))
+      Errors.nonIntegerIndexInMatrixAccess(ctx->expr(1));
+    putIsLValueDecor(ctx, true);
+  } else {
+    putTypeDecor(ctx, t1);
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitMatrixAccess(AslParser::MatrixAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  visit(ctx->expr(0));
+  visit(ctx->expr(1));
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  if (not Types.isErrorTy(t1)) {
+    if (not Types.isMatrixTy(t1)) {
+        Errors.nonMatrixInMatrixAccess(ctx);
+        putTypeDecor(ctx, Types.createErrorTy());
+    }
+    else putTypeDecor(ctx, Types.getMatrixElemType(t1));
+    visit(ctx->expr(0));
+    TypesMgr::TypeId t2 = getTypeDecor(ctx->expr(0));
+    TypesMgr::TypeId t3 = getTypeDecor(ctx->expr(1));
+    if (not Types.isIntegerTy(t2))
+      Errors.nonIntegerIndexInMatrixAccess(ctx->expr(0));
+    if (not Types.isIntegerTy(t3))
+      Errors.nonIntegerIndexInMatrixAccess(ctx->expr(1));
+    putIsLValueDecor(ctx, true);
+  } else {
+    putTypeDecor(ctx, t1);
+  }
+
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitFunction(AslParser::FunctionContext *ctx) {
   DEBUG_ENTER();
   SymTable::ScopeId sc = getScopeDecor(ctx);

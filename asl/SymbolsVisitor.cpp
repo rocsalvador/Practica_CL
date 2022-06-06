@@ -172,11 +172,18 @@ antlrcpp::Any SymbolsVisitor::visitType(AslParser::TypeContext *ctx) {
     putTypeDecor(ctx, t);
   }
   else if (ctx->ARRAY()) {
-    ctx->INTVAL();
     visit(ctx->type());
     TypesMgr::TypeId arrayType = getTypeDecor(ctx->type());
-    uint size = stoi(ctx->INTVAL()->getText());
+    uint size = stoi(ctx->INTVAL(0)->getText());
     TypesMgr::TypeId t = Types.createArrayTy(size, arrayType);
+    putTypeDecor(ctx, t);
+  }
+  else if (ctx->MATRIX()) {
+    visit(ctx->type());
+    TypesMgr::TypeId matrixType = getTypeDecor(ctx->type());
+    uint rowsSize = stoi(ctx->INTVAL(0)->getText());
+    uint colsSize = stoi(ctx->INTVAL(1)->getText());
+    TypesMgr::TypeId t = Types.createMatrixTy(rowsSize, colsSize, matrixType);
     putTypeDecor(ctx, t);
   }
   DEBUG_EXIT();
