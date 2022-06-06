@@ -100,6 +100,7 @@ statement
           // Write a string
         | WRITE STRING ';'                                      # writeString
         | RETURN expr? ';'                                      # returnStmt
+        | MAP expr INTO expr USING ident ';'                    # mapStmt
         ;
 
 // Grammar for left expressions (l-values in C++)
@@ -147,6 +148,10 @@ MUL         : '*' ;
 DIV         : '/' ;
 MOD         : '%' ;
 POW         : '**' ;
+
+MAP         : 'map' ;
+INTO        : 'into' ;
+USING       : 'using' ;
 
 NOT         : 'not' ;
 AND     	: 'and' ;

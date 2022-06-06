@@ -225,6 +225,35 @@ antlrcpp::Any TypeCheckVisitor::visitWriteExpr(AslParser::WriteExprContext *ctx)
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitMapStmt(AslParser::MapStmtContext *ctx) {
+  DEBUG_ENTER();
+
+  visit(ctx->expr(0));  
+  TypesMgr::TypeId aTy = getTypeDecor(ctx->expr(0));
+  visit(ctx->expr(1));
+  TypesMgr::TypeId bTy = getTypeDecor(ctx->expr(1));
+  visit(ctx->ident());
+  TypesMgr::TypeId idTy = getTypeDecor(ctx->ident());
+
+  if (not Types.isArrayTy(aTy) || not Types.isArrayTy(bTy)) {
+    Errors.incompatibleMapOperands(ctx);
+  } 
+  else if ((Types.isArrayTy(aTy) && Types.isArrayTy(bTy)) && (Types.getArraySize(aTy) != Types.getArraySize(bTy))) {
+    Errors.incompatibleMapOperands(ctx);
+  }
+  else if (not Types.isFunctionTy(idTy)) {
+    Errors.incompatibleMapOperands(ctx);
+  } 
+  else if (Types.getNumOfParameters(idTy) != 1) {
+    Errors.incompatibleMapOperands(ctx);
+  }
+  else if ((not Types.equalTypes(Types.getArrayElemType(aTy), Types.getParameterType(idTy, 0))) || (not Types.equalTypes(Types.getArrayElemType(bTy), Types.getFuncReturnType(idTy)))) {
+    Errors.incompatibleMapOperands(ctx);
+  }
+  DEBUG_EXIT();
+  return 0;
+}
+
 // antlrcpp::Any TypeCheckVisitor::visitWriteString(AslParser::WriteStringContext *ctx) {
 //   DEBUG_ENTER();
 //   antlrcpp::Any r = visitChildren(ctx);
