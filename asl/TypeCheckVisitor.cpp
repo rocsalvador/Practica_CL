@@ -243,14 +243,39 @@ antlrcpp::Any TypeCheckVisitor::visitLeftExprIdent(AslParser::LeftExprIdentConte
   return 0;
 }
 
+antlrcpp::Any TypeCheckVisitor::visitLeftMatrixAccess(AslParser::LeftMatrixAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  if (not Types.isErrorTy(t1)) {
+    if (not Types.isMatrixTy(t1)) {
+        Errors.nonMatrixInMatrixAccess(ctx);
+        putTypeDecor(ctx, Types.createErrorTy());
+    }
+    else putTypeDecor(ctx, Types.getMatrixElemType(t1));
+    visit(ctx->expr(0));
+    visit(ctx->expr(1));
+    TypesMgr::TypeId rowsTy = getTypeDecor(ctx->expr(0));
+    TypesMgr::TypeId colsTy = getTypeDecor(ctx->expr(1));
+    if (not Types.isIntegerTy(rowsTy)) Errors.nonIntegerIndexInMatrixAccess(ctx->expr(0));
+    if (not Types.isIntegerTy(colsTy)) Errors.nonIntegerIndexInMatrixAccess(ctx->expr(1));
+    putIsLValueDecor(ctx, true);
+  } else {
+    putTypeDecor(ctx, t1);
+  }
+  
+  DEBUG_EXIT();
+  return 0;
+}
+
 antlrcpp::Any TypeCheckVisitor::visitLeftArrayAccess(AslParser::LeftArrayAccessContext *ctx) {
   DEBUG_ENTER();
   visit(ctx->ident());
   TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
   if (not Types.isErrorTy(t1)) {
     if (not Types.isArrayTy(t1)) {
-        Errors.nonArrayInArrayAccess(ctx);
-        putTypeDecor(ctx, Types.createErrorTy());
+      Errors.nonArrayInArrayAccess(ctx);
+      putTypeDecor(ctx, Types.createErrorTy());
     }
     else putTypeDecor(ctx, Types.getArrayElemType(t1));
     visit(ctx->expr());
@@ -276,12 +301,12 @@ antlrcpp::Any TypeCheckVisitor::visitUnary(AslParser::UnaryContext *ctx) {
     if (not Types.isErrorTy(t1) and (not Types.isNumericTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
-    else putTypeDecor(ctx, t1);
+    putTypeDecor(ctx, t1);
   } else if (ctx->NOT()) {
     if (not Types.isErrorTy(t1) and (not Types.isBooleanTy(t1))) {
       Errors.incompatibleOperator(ctx->op);
     }
-    else putTypeDecor(ctx, t1);
+    putTypeDecor(ctx, Types.createBooleanTy());
   }
 
   DEBUG_EXIT();
@@ -419,6 +444,33 @@ antlrcpp::Any TypeCheckVisitor::visitExprIdent(AslParser::ExprIdentContext *ctx)
   putTypeDecor(ctx, t1);
   bool b = getIsLValueDecor(ctx->ident());
   putIsLValueDecor(ctx, b);
+  DEBUG_EXIT();
+  return 0;
+}
+
+antlrcpp::Any TypeCheckVisitor::visitMatrixAccess(AslParser::MatrixAccessContext *ctx) {
+  DEBUG_ENTER();
+  visit(ctx->ident());
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  if (not Types.isErrorTy(t1)) {
+    if (not Types.isMatrixTy(t1)) {
+      Errors.nonMatrixInMatrixAccess(ctx);
+      putTypeDecor(ctx, Types.createErrorTy());
+    } else {
+      TypesMgr::TypeId tElem = Types.getMatrixElemType(t1);
+      putTypeDecor(ctx, tElem);
+    }
+    putIsLValueDecor(ctx, true);
+    // Has 2 expr because it is a matrix
+    visit(ctx->expr(0));
+    visit(ctx->expr(1));
+    TypesMgr::TypeId rowsTy = getTypeDecor(ctx->expr(0));
+    TypesMgr::TypeId colsTy = getTypeDecor(ctx->expr(1));
+    if (not Types.isIntegerTy(rowsTy)) Errors.nonIntegerIndexInMatrixAccess(ctx->expr(0));
+    if (not Types.isIntegerTy(colsTy)) Errors.nonIntegerIndexInMatrixAccess(ctx->expr(1));
+  } else {
+    putTypeDecor(ctx, t1);
+  }
   DEBUG_EXIT();
   return 0;
 }

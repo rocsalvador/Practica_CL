@@ -171,7 +171,12 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
   std::string temp = addr1;
   code = code1 || code2;
   if (offs1 != "" ) {
-    code = code || instruction::XLOAD(temp, offs1, addr2);
+    std::string tempFloat = addr2;
+    if (Types.isFloatTy(tidLeft) and Types.isIntegerTy(tidRight)) {
+      tempFloat = "%" + codeCounters.newTEMP();
+      code = code || instruction::FLOAT(tempFloat, addr2);
+    }
+    code = code || instruction::XLOAD(temp, offs1, tempFloat);
   } else {
     // Assignment coercion
     if (Types.isIntegerTy(tidRight) && not Types.isFloatTy(tidLeft)) {
@@ -217,6 +222,38 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
       code = code || instruction::FJUMP(conditionTemp, endWhileLabel) || instruction::LOADX(auxTemp, rightArrayTemp, indexTemp);
       code = code || instruction::XLOAD(leftArrayTemp, indexTemp, auxTemp) || instruction::ADD(indexTemp, indexTemp, oneTemp);
       code = code || instruction::UJUMP(startWhileLabel) || instruction::LABEL(endWhileLabel);
+      } 
+      else if (Types.isMatrixTy(tidRight)) {
+      // còpia de matriu per valor
+      std::string leftArrayTemp = addr1;
+      if (Symbols.isParameterClass(addr1)) {
+        leftArrayTemp = "%" + codeCounters.newTEMP();
+        code = code || instruction::LOAD(leftArrayTemp, addr1);
+      }
+
+      std::string rightArrayTemp = addr2;
+      if (Symbols.isParameterClass(addr2)) {
+        rightArrayTemp = "%" + codeCounters.newTEMP();
+        code = code || instruction::LOAD(rightArrayTemp, addr2);
+      }
+
+      std::string arraySize = std::to_string(Types.getMatrixSize(tidRight));
+      std::string auxTemp = "%" + codeCounters.newTEMP();
+      std::string labelNum = codeCounters.newLabelWHILE();
+      std::string startWhileLabel = "startarraycopy" + labelNum;
+      std::string endWhileLabel = "endarraycopy" + labelNum;
+      std::string conditionTemp = "%" + codeCounters.newTEMP();
+      std::string indexTemp = "%" + codeCounters.newTEMP();
+      std::string arraySizeTemp = "%" + codeCounters.newTEMP();
+      std::string oneTemp = "%" + codeCounters.newTEMP();
+
+      code = code || instruction::ILOAD(arraySizeTemp, arraySize) || instruction::ILOAD(oneTemp, "1") || instruction::ILOAD(indexTemp, "0");
+      code = code || instruction::LABEL(startWhileLabel) || instruction::LT(conditionTemp, indexTemp, arraySizeTemp);
+      code = code || instruction::FJUMP(conditionTemp, endWhileLabel) || instruction::LOADX(auxTemp, rightArrayTemp, indexTemp);
+      code = code || instruction::XLOAD(leftArrayTemp, indexTemp, auxTemp) || instruction::ADD(indexTemp, indexTemp, oneTemp);
+      code = code || instruction::UJUMP(startWhileLabel) || instruction::LABEL(endWhileLabel);
+
+    
     }
     else {
       code = code || instruction::LOAD(temp, addr2);
@@ -469,6 +506,56 @@ antlrcpp::Any CodeGenVisitor::visitWriteString(AslParser::WriteStringContext *ct
 antlrcpp::Any CodeGenVisitor::visitLeftExprIdent(AslParser::LeftExprIdentContext *ctx) {
   DEBUG_ENTER();
   CodeAttribs && codAts = visit(ctx->ident());
+  DEBUG_EXIT();
+  return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitLeftMatrixAccess(AslParser::LeftMatrixAccessContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs &&   codAtsId = visit(ctx->ident());
+  std::string        addrId = codAtsId.addr;
+  CodeAttribs && codAtsExpr0 = visit(ctx->expr(0));
+  std::string      addrExpr0 = codAtsExpr0.addr;
+  CodeAttribs && codAtsExpr1 = visit(ctx->expr(1));
+  std::string      addrExpr1 = codAtsExpr1.addr;
+
+  instructionList code;
+  code = code || codAtsExpr0.code || codAtsExpr1.code;
+
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  uint ncols = Types.getMatrixCols(t1);
+  std::string ncolsTemp = "%" + codeCounters.newTEMP();
+  std::string offsetTemp0 = "%" + codeCounters.newTEMP();
+  std::string offsetTemp1 = "%" + codeCounters.newTEMP();
+
+  // offset = addrExpr0 * NCOLS + addrExpr1
+  code = code || instruction::ILOAD(ncolsTemp, std::to_string(ncols));
+  code = code || instruction::MUL(offsetTemp0, addrExpr0, ncolsTemp);
+  code = code || instruction::ADD(offsetTemp1, offsetTemp0, addrExpr1);
+
+  std::string conditionHaltTemp = "%" + codeCounters.newTEMP();
+  std::string matrixSizeTemp = "%" + codeCounters.newTEMP();
+  std::string labelNumIf = codeCounters.newLabelIF();
+  std::string inRangeLabel = "matrixAccessCorrect"+labelNumIf;
+
+  code = code || instruction::ILOAD(matrixSizeTemp, std::to_string(Types.getMatrixSize(t1))) || instruction::LT(conditionHaltTemp, matrixSizeTemp, offsetTemp1);
+  code = code || instruction::FJUMP(conditionHaltTemp, inRangeLabel);
+  code = code || instruction::HALT(code::INDEX_OUT_OF_RANGE);
+
+  code = code || instruction::LABEL(inRangeLabel);
+  
+  std::string addrTemp = addrId;
+  if (Symbols.isParameterClass(addrId)) {
+    addrTemp = "%" + codeCounters.newTEMP();
+    TypesMgr::TypeId matrixTy = Types.getMatrixElemType(t1);
+    if (Types.isFloatTy(matrixTy)) {
+      code = code || instruction::FLOAD(addrTemp, addrId);
+    }
+    else {
+      code = code || instruction::LOAD(addrTemp, addrId);
+    }
+  }
+  CodeAttribs codAts(addrTemp, offsetTemp1, code);
   DEBUG_EXIT();
   return codAts;
 }
@@ -732,6 +819,54 @@ antlrcpp::Any CodeGenVisitor::visitValue(AslParser::ValueContext *ctx) {
     code = instruction::ILOAD(temp, ctx->getText());
   }
   CodeAttribs codAts(temp, "", code);
+  DEBUG_EXIT();
+  return codAts;
+}
+
+antlrcpp::Any CodeGenVisitor::visitMatrixAccess(AslParser::MatrixAccessContext *ctx) {
+  DEBUG_ENTER();
+  CodeAttribs &&   codAtsId = visit(ctx->ident());
+  std::string        addrId = codAtsId.addr;
+  CodeAttribs && codAtsExpr0 = visit(ctx->expr(0));
+  std::string      addrExpr0 = codAtsExpr0.addr;
+  CodeAttribs && codAtsExpr1 = visit(ctx->expr(1));
+  std::string      addrExpr1 = codAtsExpr1.addr;
+
+  instructionList code;
+  std::string temp = "%"+codeCounters.newTEMP();
+  std::string tempCopyReference = addrId;
+
+  // If it's a parameter, reference it through a temporal register
+  if (Symbols.isParameterClass(addrId)) {
+    tempCopyReference = "%"+codeCounters.newTEMP();
+    code = code || instruction::LOAD(tempCopyReference, addrId);
+  }
+  TypesMgr::TypeId t1 = getTypeDecor(ctx->ident());
+  uint ncols = Types.getMatrixCols(t1);
+  std::string ncolsTemp = "%" + codeCounters.newTEMP();
+  std::string offsetTemp0 = "%" + codeCounters.newTEMP();
+  std::string offsetTemp1 = "%" + codeCounters.newTEMP();
+
+  // offset = addrExpr0 * NROWS + addrExpr1
+  code = code || codAtsExpr0.code || codAtsExpr1.code;
+  code = code || instruction::ILOAD(ncolsTemp, std::to_string(ncols));
+  code = code || instruction::MUL(offsetTemp0, addrExpr0, ncolsTemp);
+  code = code || instruction::ADD(offsetTemp1, offsetTemp0, addrExpr1);
+
+  std::string conditionHaltTemp = "%" + codeCounters.newTEMP();
+  std::string matrixSizeTemp = "%" + codeCounters.newTEMP();
+  std::string labelNumIf = codeCounters.newLabelIF();
+  std::string inRangeLabel = "matrixAccessCorrect"+labelNumIf;
+
+  code = code || instruction::ILOAD(matrixSizeTemp, std::to_string(Types.getMatrixSize(t1))) || instruction::LT(conditionHaltTemp, matrixSizeTemp, offsetTemp1);
+  code = code || instruction::FJUMP(conditionHaltTemp, inRangeLabel);
+  code = code || instruction::HALT(code::INDEX_OUT_OF_RANGE);
+
+  code = code || instruction::LABEL(inRangeLabel);
+
+  code = code || instruction::LOADX(temp, tempCopyReference, offsetTemp1);
+  CodeAttribs codAts(temp, "", code);
+
   DEBUG_EXIT();
   return codAts;
 }
