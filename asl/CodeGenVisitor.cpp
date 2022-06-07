@@ -176,7 +176,7 @@ antlrcpp::Any CodeGenVisitor::visitAssignStmt(AslParser::AssignStmtContext *ctx)
       tempFloat = "%" + codeCounters.newTEMP();
       code = code || instruction::FLOAT(tempFloat, addr2);
     }
-    code = code || instruction::XLOAD(temp, offs1, addr2);
+    code = code || instruction::XLOAD(temp, offs1, tempFloat);
   } else {
     // Assignment coercion
     if (Types.isIntegerTy(tidRight) && not Types.isFloatTy(tidLeft)) {
